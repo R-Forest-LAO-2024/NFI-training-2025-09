@@ -7,4 +7,4 @@ if (!require(here)) install.packages("here"); library(here)
 source(here("R/00-load-packages.R"))
 
 ## Training sessions
-source("R/05-data-preparation.R")
+source("R/SOL-05-data-preparation.R")
