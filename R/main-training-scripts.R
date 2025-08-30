@@ -11,3 +11,12 @@ source(here("R/SOL-05-data-preparation.R"))
 
 source(here("R/SOL-06-data-joins.R"))
 
+source(here("R/SOL-07a-tree-weight.R"))
+
+source(here("R/SOL-07b-tree-basal-area.R"))
+
+source(here("R/SOL-08a-tree-agb.R"))
+
+source(here("R/SOL-08b-tree-bgb.R"))
+
+source(here("R/SOL-08c-tree-carbon.R"))
