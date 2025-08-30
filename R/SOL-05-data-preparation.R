@@ -1,22 +1,24 @@
 
-
 ## GOALS:
 ## 1. Load initial tables
 ## 2. Correct errors in subplot table (duplicates in subplot_id)
-## 3. Add lcs_no to tree table
-## 4. Join subplot and lcs info to tree table
-## 5. add ancillary info (optional)
+
 
 
 ##
 ## 1. Load initial harmonized tables ####
 ##
 
+## Main script source:
+## "R/setup/load-anci.R"
+## "R/setup/get-data.R"
+
+
 ## 1.1. Load subplot, lcs, tree tables ####
 subplot_init <- read_csv("data/training_subplot.csv", show_col_types = FALSE)
 
 
-## EX: Load tree and lcs tables as tree_init and lcs_init ####
+## EX-1: Load tree and lcs tables as tree_init and lcs_init ####
 ## !!! SOL
 lcs_init <- read_csv("data/training_lcs.csv", show_col_types = FALSE)
 tree_init <- read_csv("data/training_tree.csv", show_col_types = FALSE)
@@ -43,7 +45,7 @@ tree_init |>
   geom_path(data = circ16, aes(x = x, y = y)) +
   coord_fixed()
 
-## EX: make a tree location figure ####
+## EX-2: make a tree location figure ####
 ## - for subplot '1A' -> filter()
 ## - change color for trees with DBH <= 30cm and trees with DBH > 30cm -> mutate(), if_else()
 ## - create table circ08 with the data to add the 8m radius circle to the figure
@@ -66,7 +68,7 @@ tree_init |>
   coord_fixed()
 ## !!!
 
-## EX: any small tree outlier? ####
+## EX-3: any small tree outlier? ####
 ## - Make a tree location map with only the small trees -> filter()
 ## - Add the 8 and 16 m radius circles 
 ## - is there any small tree outside the 8 m radius circle
@@ -114,7 +116,11 @@ tree_init |>
 ## 2. Clean/correct data ####
 ## 
 
-## 2.1. Identify duplicated in subplot_id ####
+## Main script source:
+## "R/user/00a-clean-subplot.R"
+
+
+## 2.1. Identify duplicates in subplot_id ####
 vec_dup <- subplot_init |>
   group_by(subplot_id) |>
   summarise(count = n(), .groups = "drop") |>
@@ -125,10 +131,10 @@ vec_dup
 ## EX: Identify duplicates of subplot_plot_no ####
 ## !!! SOL
 vec_dup2 <- subplot_init |>
-  group_by(subplot_plot_no) |>
+  group_by(plot_no) |>
   summarise(count = n(), .groups = "drop") |>
   filter(count > 4) |>
-  pull(subplot_plot_no)
+  pull(plot_no)
 vec_dup2
 ## !!!
 
@@ -136,7 +142,7 @@ vec_dup2
 ## 2.2. Correct the subplot_no issues ####
 
 ## How to correct: check the duplicates and observe the timestamps
-tt <- subplot_init |> filter(subplot_plot_no == 631)
+tt <- subplot_init |> filter(plot_no == 631)
 #View(tt)
 
 ## Implement correction
@@ -148,8 +154,8 @@ subplot <- subplot_init |>
       TRUE ~ subplot_no
     ),
     subplot_id = case_when(
-      subplot_plot_no < 10 ~ paste0("00", plot_no, subplot_no),
-      subplot_plot_no < 100 ~ paste0("0", plot_no, subplot_no),
+      plot_no < 10 ~ paste0("00", plot_no, subplot_no),
+      plot_no < 100 ~ paste0("0", plot_no, subplot_no),
       TRUE ~ paste0(plot_no, subplot_no)
     )
   )
@@ -168,8 +174,8 @@ subplot <- subplot_init |>
       TRUE ~ subplot_no
     ),
     subplot_id = case_when(
-      subplot_plot_no < 10 ~ paste0("00", plot_no, subplot_no),
-      subplot_plot_no < 100 ~ paste0("0", plot_no, subplot_no),
+      plot_no < 10 ~ paste0("00", plot_no, subplot_no),
+      plot_no < 100 ~ paste0("0", plot_no, subplot_no),
       TRUE ~ paste0(plot_no, subplot_no)
     )
   )
@@ -183,7 +189,7 @@ vec_dup
 ## >> character(0) = no duplicates
 
 
-## 2.3 tree and LCS errors ####
+## 2.3 tree and LCS checks ####
 
 ## Check that the min DBH is bigger than 10 and that the biggest DBH is realistiic with summary()
 summary(tree_init$tree_dbh)
