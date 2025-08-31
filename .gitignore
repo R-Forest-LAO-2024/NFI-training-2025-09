@@ -1,7 +1,10 @@
 ## custom gitignore
 data/
 results/
-
+*.DS_store
+*.html
+*.docx
+*.pdf
 
 # History files
 .Rhistory

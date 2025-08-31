@@ -1,0 +1,337 @@
+---
+title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
+subtitle: "Session 05: data preparation"
+date: "01-05 Sep 2025"
+number-sections: true
+toc: true
+toc-depth: 2
+highlight-style: github
+theme: 
+  light: flatly
+  dark: darkly
+format: 
+  html: 
+    toc-location: left
+    embed-resources: true
+  docx:
+    reference-doc: custom-reference-doc.docx
+  pdf: 
+    documentclass: scrartcl
+    papersize: A4
+    colorlinks: true
+editor: visual
+---
+
+# Goals {.unnumbered}
+
+1.  Load initial tables
+
+2.  Correct errors in subplot table (duplicates in subplot_id)
+
+# Setup {.unnumbered}
+
+Load Packages
+
+```{r}
+#| output: false
+ 
+## Useful when sourcing script from Quarto doc.
+if (!require(here)) install.packages("here"); library(here)
+
+## Load packages
+source(here("R/00-load-packages.R"))
+```
+
+<!-- Section 1 -->
+
+# Load harmonized tables and ancillary data
+
+<!-- Section 1.1 -->
+
+## Load subplot, lcs, tree tables from NFI
+
+We can read tables or CSV files from the computer with the function `read_csv()`. We can store the initial table in objects with the suffix '\_init' to keep the initial version in the environment.
+
+Example: read the table training_subplot.csv from the computer into the object `subplot_init`:
+
+```{r}
+subplot_init <- read_csv("data/training_subplot.csv", show_col_types = FALSE)
+```
+
+Load the tables training_tree.csv and training_lcs.csv in the next exercise (@exr-01).
+
+:::: {.callout-tip appearance="simple"}
+<!-- EX-01 -->
+
+::: {#exr-01}
+## Load 'training_tree.csv' and 'training_lcs.csv' tables
+
+\linebreak
+
+-   Load the table 'training_lcs.csv' in the R objects 'lcs_init'.
+-   Load the table 'training_tree.csv' in the R objects 'tree_init'.
+
+```{r}
+#| label: ex-01-code
+
+## Type here the answer to exercise 1
+
+## !!! SOL
+lcs_init <- read_csv("data/training_lcs.csv", show_col_types = FALSE)
+tree_init <- read_csv("data/training_tree.csv", show_col_types = FALSE)
+## !!!
+```
+:::
+::::
+
+<!-- section 1.2 -->
+
+## Load ancillary data (Chave E and Phase 1 plot data)
+
+Ancillary data are loaded into a list to keep the environment tidy.
+
+```{r}
+anci <- list()
+
+anci$ph1    <- read_csv("data/training_anci_phase1.csv", show_col_types = FALSE)
+anci$plot_E <- read_csv("data/training_anci_plotE.csv", show_col_types = FALSE)
+```
+
+<!-- Section 1.3 -->
+
+## Visualize tree locations
+
+We visualize tree locations from the `tree_init` table with `ggplot()` and `geom_point()`.
+
+Step-by-step for one subplot:
+
+-   Define `circ16` as tibble of 100 rows to draw a circular plot in ggplot, based on a radius and an angle "theta" $\theta$ in radian.
+
+-   Draw a ggplot with trees from the table `tree_init` in plot 631 and subplot "c", using `filter()`, and add plot boundary with `circ16`.
+
+```{r}
+circ16 <- tibble(
+  theta = seq(0, 2*pi, length = 100),
+  x = 16 * cos(theta),
+  y = 16 * sin(theta)
+)
+
+tree_init |>
+  filter(plot_no == 631, subplot_no == "C") |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point() +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+```
+
+-   In similar way, perform exercise to make a tree location figure for subplot "A" of plot_no 1, but this time apply DBH \<= 30cm and trees with DBH \> 30cm for dbh classes "small" and "big". Also create tibble of circ08 in similar way to add 8m radius circle to the figure
+
+    ```{r}
+    ## EX-2: make a tree location figure ####
+    ## - for subplot '1A' -> filter()
+    ## - change color for trees with DBH <= 30cm and trees with DBH > 30cm -> mutate(), if_else()
+    ## - create table circ08 with the data to add the 8m radius circle to the figure
+    ## 
+
+    ## !!! SOL
+    circ08 <- tibble(
+      theta = seq(0, 2*pi, length = 100),
+      x = 8 * cos(theta),
+      y = 8 * sin(theta)
+    )
+
+    tree_init |> 
+      filter(plot_no == 1, subplot_no == "A") |>
+      mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
+      ggplot(aes(x = tree_x, y = tree_y)) +
+      geom_point(aes(color = tree_dbh_cat)) +
+      geom_path(data = circ08, aes(x = x, y = y)) +
+      geom_path(data = circ16, aes(x = x, y = y)) +
+      coord_fixed()
+    ## !!!
+    ```
+
+# Detecting outliers
+
+Here we check for all trees if any of the trees with tree category "small", fall outside the 8m circle. To do this first we need to make a tree map for all small trees and draw 8m and 16m circle on the map to visually observe if any trees fall outside 8m radius.
+
+-   Make a tree location map
+
+```{r}
+tree_init |> 
+  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
+  filter(tree_dbh_cat == "small") |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(aes(color = tree_dbh_cat)) +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+```
+
+-   Observe the tree location map showing "small" trees that fall outside 8m radius
+
+-   Now to identify the trees as outliers
+
+```{r}
+## alternative solution
+outliers <- tree_init |>
+  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
+  filter(tree_dbh_cat == "small", tree_distance > 8)
+```
+
+-   Note that 72 observations are identified as outliers
+
+-   Now visualize only the outliers using ggplot by showing points along with8m and 16m radius circles. Include and observe other visualization parameters eg: transparency and symbolics.
+
+    ```{r}
+    tree_init |> 
+      mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
+      filter(tree_dbh_cat == "small") |>
+      ggplot(aes(x = tree_x, y = tree_y)) +
+      geom_point(alpha = 0.2) +
+      geom_point(data = outliers, col = "red", shape = 23, size = 4) +
+      geom_path(data = circ08, aes(x = x, y = y)) +
+      geom_path(data = circ16, aes(x = x, y = y)) +
+      coord_fixed()
+    ```
+
+-   Now instead of using tree_dbh\<=30, recode the above script for tree_dbh \<30. This is to check if the 72 observations are actually the outliers or not.
+
+    ```{r}
+    ## recoded for DBH < 30 
+    tree_init |> 
+      mutate(tree_dbh_cat = if_else(tree_dbh < 30, "small", "big")) |>
+      filter(tree_dbh_cat == "small") |>
+      ggplot(aes(x = tree_x, y = tree_y)) +
+      geom_point(aes(color = tree_dbh_cat)) +
+      geom_path(data = circ08, aes(x = x, y = y)) +
+      geom_path(data = circ16, aes(x = x, y = y)) +
+      coord_fixed()
+    ## !!!
+    ```
+
+-   Observe the ggplot now that after taking tree_dbh \< 30, there are no outliers. It could be due to adoption of different class threshol during calculation. This issue to be discussed in plenary.
+
+# Identify duplicates in subplots
+
+Here we want to check within subplots if there are duplicate ids(subplot_id) and plot numbers(plot_no).
+
+-   Define a vector "vec-dup" to check duplicate subplot ids using group by, summarize, filter and pull functions. Notice the filter and pull functions applied in count \> 1 for identifying more than 1 subplot_id.
+
+    ```{r}
+    ## 2.1. Identify duplicates in subplot_id ####
+    vec_dup <- subplot_init |>
+      group_by(subplot_id) |>
+      summarise(count = n(), .groups = "drop") |>
+      filter(count > 1) |>
+      pull(subplot_id)
+    vec_dup
+    ```
+
+-   Notice the results as 3 subplots have duplicate subplot_id.
+
+-   Similarly define "vec_dup2" to check duplicate plot_no within each subplots. Here notice that each subplot has 4 plot_nos with same ID, hence the duplicate check should be applied for count \>4.
+
+    ```{r}
+    ## EX: Identify duplicates of subplot_plot_no ####
+    ## !!! SOL
+    vec_dup2 <- subplot_init |>
+      group_by(plot_no) |>
+      summarise(count = n(), .groups = "drop") |>
+      filter(count > 4) |>
+      pull(plot_no)
+    vec_dup2
+    ## !!!
+    ```
+
+-   Now to correct the duplicate subplot_id, first check each of the duplicate subplots by filtering them individually and observing the time-stamps of data collection to decide on which subplot_id need correction.
+
+    ```{r}
+    ## 2.2. Correct the subplot_no issues ####
+
+    ## How to correct: check the duplicates and observe the timestamps
+    tt <- subplot_init |> filter(plot_no == 631)
+    ```
+
+-   Perform the correction using case_when function for subplot_id 631C
+
+    ```{r}
+    subplot <- subplot_init |>
+      mutate(
+        subplot_no = case_when(
+          subplot_id == "631C" & ONA_index == 109 ~ "B",
+          ## ADD more corrections,
+          TRUE ~ subplot_no
+        )
+      )
+    ```
+
+<!-- -->
+
+-   Prform the same correction using case_when function for all subplot_id
+
+```{r}
+subplot <- subplot_init |>
+  mutate(
+    subplot_no = case_when(
+      subplot_id == "631C" & ONA_index == 109 ~ "B",
+      subplot_id == "632C" & ONA_index == 113 ~ "B",
+      subplot_id == "553D" & ONA_index == 265 ~ "C",
+      TRUE ~ subplot_no
+    )
+)
+```
+
+-   In addition, since subplot_id is a text field, we need to make it consistent for number of characters to ensure correct sorting of the rows. For this purpose perform additional correction in subplot_id to include texts "0" and "00" to make the number of characters consistent.
+
+```{r}
+subplot <- subplot_init |>
+  mutate(
+    subplot_id = case_when(
+      plot_no < 10 ~ paste0("00", plot_no, subplot_no),
+      plot_no < 100 ~ paste0("0", plot_no, subplot_no),
+      TRUE ~ paste0(plot_no, subplot_no)
+    )
+  )
+```
+
+-   Finally check duplicates again to ensure corrections are applied
+
+    ```{r}
+    vec_dup <- subplot |>
+      group_by(subplot_id) |>
+      summarise(count = n(), .groups = "drop") |>
+      filter(count > 1) |>
+      pull(subplot_id)
+    vec_dup
+    ```
+
+# Checks in tree and landcover tables
+
+Perform checks in tree related to tree_dbh, azimuth and distance to ensure no absurd values are present.
+
+```{r}
+## Check that the min DBH is bigger than 10 and that the biggest DBH is realistiic with summary()
+summary(tree_init$tree_dbh)
+
+## EX: check azimuth and distance ####
+## - check that azimuth is between 0 and 360
+## - check that distance is between 0 and 16
+
+## !!! SOL
+summary(tree_init$tree_azimuth)
+summary(tree_init$tree_distance)
+## !!!
+```
+
+-   After resolving all errors, save as main tables for tree and lcs
+
+    ```{r}
+    ## >> no errors saving to main
+    tree <- tree_init
+    lcs <- lcs_init
+
+
+    ## Remove temporary objects
+    rm(vec_dup, vec_dup2, tt)
+    ```
