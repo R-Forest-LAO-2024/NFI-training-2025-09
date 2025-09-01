@@ -76,22 +76,18 @@ tree_init |>
 
 ## !!! SOL
 tree_init |> 
-  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
-  filter(tree_dbh_cat == "small") |>
+  filter(tree_dbh <= 30) |>
   ggplot(aes(x = tree_x, y = tree_y)) +
-  geom_point(aes(color = tree_dbh_cat)) +
+  geom_point(col = "darkred") +
   geom_path(data = circ08, aes(x = x, y = y)) +
   geom_path(data = circ16, aes(x = x, y = y)) +
   coord_fixed()
 
 ## alternative solution
-outliers <- tree_init |>
-  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
-  filter(tree_dbh_cat == "small", tree_distance > 8)
+outliers <- tree_init |> filter(tree_dbh <= 30, tree_distance > 8)
 
 tree_init |> 
-  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
-  filter(tree_dbh_cat == "small") |>
+  filter(tree_dbh <= 30) |>
   ggplot(aes(x = tree_x, y = tree_y)) +
   geom_point(alpha = 0.2) +
   geom_point(data = outliers, col = "red", shape = 23, size = 4) +
@@ -99,12 +95,11 @@ tree_init |>
   geom_path(data = circ16, aes(x = x, y = y)) +
   coord_fixed()
 
-## recoded for DBH < 30 
+## re-coded for DBH < 30 
 tree_init |> 
-  mutate(tree_dbh_cat = if_else(tree_dbh < 30, "small", "big")) |>
-  filter(tree_dbh_cat == "small") |>
+  filter(tree_dbh < 30) |>
   ggplot(aes(x = tree_x, y = tree_y)) +
-  geom_point(aes(color = tree_dbh_cat)) +
+  geom_point(col = "darkred") +
   geom_path(data = circ08, aes(x = x, y = y)) +
   geom_path(data = circ16, aes(x = x, y = y)) +
   coord_fixed()
@@ -209,5 +204,5 @@ lcs <- lcs_init
 
 
 ## Remove temporary objects
-rm(vec_dup, vec_dup2, tt)
+rm(vec_dup, vec_dup2, tt, outliers)
 
