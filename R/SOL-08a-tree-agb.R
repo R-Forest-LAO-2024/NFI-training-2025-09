@@ -43,6 +43,7 @@ tree <- tree |>
 
 ## EX-01: complete tree_agb_final ####
 ## - for all forest land covers add their equations as shown at the beginning of the script
+## - For land cover with no equation, assign 0
 ## - make a figure with 'tree_agb_final' against 'tree_dbh' as dots
 ## - make a figure with 'tree_agb_final' against 'tree_dbh' as line with color based on 'lc_code'
 
@@ -76,14 +77,49 @@ tree |>
 ## !!!
 
 
+## 2. AGB from Chave 2005 and 2014 ####
+
+## EX-02: add equations for all trees ####
+## - Add 'tree_agb_chave05' with Chave et al. 2005 equation
+## - Add 'tree_agb_chave14' with Chave et al. 2014 equation
+## - Add  'tree_agb_EG' with the evergreen forest model
+
+## !!! SOL
+tree <- tree |> 
+  mutate(
+    tree_agb_chave05 = 0.6 * exp(-1.499 + 2.148*log(tree_dbh) + 0.207*(log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),
+    tree_agb_chave14 = exp(-1.803 - 0.976*plot_E + 0.976*log(0.6) + 2.673*log(tree_dbh) -0.0299*(log(tree_dbh))^2),
+    tree_agb_EG      = 0.3112 * tree_dbh^2.2331
+    )
+## !!!
 
 
+## 3. Compare AGB models
+
+## 3.1. Natural forest ####
+tree |>
+  filter(tree_agb_final != 0, lc_no <= 20) |>
+  ggplot(aes(x = tree_dbh, y = tree_agb_final)) +
+  geom_point() +
+  geom_line(aes(y = tree_agb_chave05), color = "grey60") +
+  geom_line(aes(y = tree_agb_chave14), color = "darkred") +
+  geom_line(aes(y = tree_agb_EG), color = "darkgreen") +
+  facet_wrap(~lc_no)
 
 
-,
-tree_agb_final = round(tree_agb_final, 3),
-# tree_agb_chave14 = round(exp(-1.803 - 0.976*plot_E + 0.976*log(wd_all) + 2.673*log(tree_dbh) -0.0299*(log(tree_dbh))^2), 3),
-# tree_agb_chave05 = round(wd_all * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3), 3),
-tree_agb_chave14_wd06 = round(exp(-1.803 - 0.976*plot_E + 0.976*log(0.6) + 2.673*log(tree_dbh) -0.0299*(log(tree_dbh))^2), 3),
-tree_agb_chave05_wd06 = round(0.6 * exp(-1.499 + 2.148*log(tree_dbh) + 0.207*(log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3), 3),
-tree_agb_EG = 0.3112 * tree_dbh^2.2331,
+## 3.2 planted forest ####
+
+## EX-03 compare models for plantations ####
+## - Make a similar graph than 3.1 but for planted forest only
+
+## !!! SOL
+tree |>
+  filter(tree_agb_final != 0, lc_no >= 160) |>
+  ggplot(aes(x = tree_dbh, y = tree_agb_final)) +
+  geom_point() +
+  geom_line(aes(y = tree_agb_chave05), color = "grey60") +
+  geom_line(aes(y = tree_agb_chave14), color = "darkred") +
+  geom_line(aes(y = tree_agb_EG), color = "darkgreen") +
+  facet_wrap(~lc_code)
+## !!!
+

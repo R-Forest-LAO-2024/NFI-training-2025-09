@@ -42,7 +42,7 @@ tree <- tree |>
 ## !!! SOL
 tree <- tree |>
   mutate(
-    tree_spha = if_else(tree_dbh < 30, pi * 16^2 / 10000, pi * 16^2 / 10000),
+    tree_spha = if_else(tree_dbh < 30, pi * 8^2 / 10000, pi * 16^2 / 10000),
     tree_weight_spha = 1 / tree_spha
   )
 ## !!!

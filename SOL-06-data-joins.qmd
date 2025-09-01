@@ -76,6 +76,10 @@ Load the tables 'training_tree.csv' and 'training_lcs.csv' in the next exercise 
 
 ## Type here the answer to exercise 1
 
+## !!! SOL
+lcs_init <- read_csv("data/training_lcs.csv", show_col_types = FALSE)
+tree_init <- read_csv("data/training_tree.csv", show_col_types = FALSE)
+## !!!
 ```
 :::
 ::::
@@ -149,6 +153,22 @@ Adapt the previous code to make a tree location map for the subplot '1A' and add
 
 ## Type here the answer to exercise 2
 
+## !!! SOL
+circ08 <- tibble(
+  theta = seq(0, 2*pi, length = 100),
+  x = 8 * cos(theta),
+  y = 8 * sin(theta)
+)
+
+tree_init |> 
+  filter(plot_no == 1, subplot_no == "A") |>
+  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(aes(color = tree_dbh_cat)) +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+## !!!
 
 ```
 :::
@@ -173,9 +193,17 @@ First, make a figure with tree location of all trees smaller than or equal to 30
 ```{r}
 #| label: ex-03-1
 
-## Type here the answer to exercise 3 part 1
+##Type here the answer to exercise 3 part 1
 
-
+## !!! SOL
+tree_init |> 
+  filter(tree_dbh <= 30) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(col = "darkred") +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+## !!!
 ```
 
 We can highlight outliers by making a specific table for them, they are trees with `tree_distance` \> 8m and `tree_dbh` \<= 30 cm. We can plot that table with big size point and a shape with no fill (see shape 21 to 24 in `help(pch)`.
@@ -191,7 +219,18 @@ Make a new figure with:
 
 ## Type here the answer to exercise 3 part 2
 
+## !!! SOL
+outliers <- tree_init |> filter(tree_dbh <= 30, tree_distance > 8)
 
+tree_init |> 
+  filter(tree_dbh <= 30) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(alpha = 0.2) +
+  geom_point(data = outliers, col = "red", shape = 23, size = 4) +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+## !!!
 ```
 :::
 
@@ -206,7 +245,16 @@ Now are these outliers measurement errors?
 
 ## Type here the answer to exercise 3 part 3
 
-
+## !!! SOL
+tree_init |> 
+  mutate(tree_dbh_cat = if_else(tree_dbh <= 30, "small", "big")) |>
+  filter(tree_dbh < 30) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(col = "darkred") +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+## !!!
 ```
 
 Conclusion: the trees found outside the small circle were trees with DBH = 30 cm. They were not measurement errors, they were part of the big trees and therefore could be found outside the 8m radius circle.
@@ -216,7 +264,7 @@ Conclusion: the trees found outside the small circle were trees with DBH = 30 cm
 
 # Find and correct errors
 
-One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programmatically but often have to be solved manually.
+One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programatically but often have to be solved manually.
 
 This section introduces how to use `group_by()` and `summarise()` to find duplicates in subplot IDs
 
@@ -264,7 +312,14 @@ Now practice the same code sequence to check if there are duplicates in `plot_no
 
 ## Type here the answer to exercise 4
 
-
+## !!! SOL
+vec_dup2 <- subplot_init |>
+  group_by(plot_no) |>
+  summarise(count = n(), .groups = "drop") |>
+  filter(count > 4) |>
+  pull(plot_no)
+vec_dup2
+## !!!
 ```
 
 There should be no duplicates of `plot_no`.
@@ -325,7 +380,17 @@ Note: we correct `subplot_no` now, but we will need to remake `subplot_id` once 
 
 ## Type here the answer to exercise 5
 
-
+## !!! SOL
+subplot <- subplot_init |>
+  mutate(
+    subplot_no = case_when(
+      subplot_id == "631C" & ONA_index == 109 ~ "B",
+      subplot_id == "632C" & ONA_index == 113 ~ "B",
+      subplot_id == "553D" & ONA_index == 265 ~ "C",
+      TRUE ~ subplot_no
+    )
+)
+## !!!
 ```
 :::
 ::::
@@ -385,6 +450,10 @@ We can check for outliers in tree distance and azimuth in @exr-06.
 
 ## Type here the answer to exercise 6
 
+## !!! SOL
+summary(tree_init$tree_azimuth)
+summary(tree_init$tree_distance)
+## !!!
 ```
 
 No error found in distance or azimuth.

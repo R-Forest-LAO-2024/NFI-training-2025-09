@@ -216,7 +216,7 @@ Conclusion: the trees found outside the small circle were trees with DBH = 30 cm
 
 # Find and correct errors
 
-One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programmatically but often have to be solved manually.
+One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programatically but often have to be solved manually.
 
 This section introduces how to use `group_by()` and `summarise()` to find duplicates in subplot IDs
 
