@@ -22,7 +22,7 @@ format:
 editor: visual
 ---
 
-Context
+# Context {.unnumbered}
 
 This training contains all the code presented and the exercises with solutions for the "**Training workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle**", held in FIPD office, Vientiane, Lao PDR, from 1st to 5th September 2025.
 
@@ -32,15 +32,11 @@ The training objective was to:
 2.  Present the code base used for analyzing the 4th National Forest Inventory of Lao PDR, implemented in 2024 and 2025.
 3.  Explore opportunities to build a R community with research institutions and the civil society to help each other build analytical skills and deal with complex data analysis in the forest, ecology and environment sectors.
 
-# Goals {.unnumbered}
+This report compiles the main slides of the presentation, all the code presented during the training, with the exerices and the solutions.
 
-1.  Assign LCS number to trees
+# Initial Setup {.unnumbered}
 
-2.  Join land cover and Chave E to trees
-
-# Setup {.unnumbered}
-
-We load libraries and run the code for loading data in the solution script 05 to have our setup ready for data joins
+Before going to loading data and perform the analysis, we need to prepare the environment by loading packages and setting a few options. Here we don't load directly packages, but we source a script that load them.
 
 ```{r}
 #| label: setup
@@ -50,12 +46,492 @@ We load libraries and run the code for loading data in the solution script 05 to
 if (!require(here)) install.packages("here"); library(here)
 
 source(here("R/00-load-packages.R"))
-source(here("R/SOL-05-data-preparation.R"))
 ```
 
-<!-- Section 1 -->
+# Session 01: Objectives
 
-# Assign LCS number to trees
+TBD
+
+{{< pagebreak >}}
+
+# Session 02: Updated calculation chain for the NFI cycle 4 carbon analysis
+
+TBD
+
+{{< pagebreak >}}
+
+# Session 03: Discussion and remarks on the updated calculations
+
+TBD
+
+{{< pagebreak >}}
+
+# Session 04: Refresher on R for forest data analysis
+
+TBD
+
+{{< pagebreak >}}
+
+# Session 05: data preparation
+
+**Goals**
+
+1.  Load initial tables and visualize core data
+
+2.  Correct errors in subplot table (duplicates in subplot_id)
+
+<!-- Section 5.1 -->
+
+## Load harmonized tables and ancillary data
+
+<!-- Section 5.1.1 -->
+
+### Load subplot, lcs, tree tables from NFI
+
+We can read tables or CSV files from the computer with the function `read_csv()`. We can store the initial table in objects with the suffix '\_init' to keep the initial version in the environment.
+
+Example: read the table 'training_subplot.csv' from the computer into the object `subplot_init`:
+
+```{r}
+subplot_init <- read_csv("data/training_subplot.csv", show_col_types = FALSE)
+```
+
+Load the tables 'training_tree.csv' and 'training_lcs.csv' in the @exr-51.
+
+:::: {.callout-tip appearance="simple"}
+<!-- EX 5.1 -->
+
+::: {#exr-51}
+## Load 'training_tree.csv' and 'training_lcs.csv' tables
+
+\linebreak
+
+-   Load the table 'training_lcs.csv' in the R objects 'lcs_init'.
+-   Load the table 'training_tree.csv' in the R objects 'tree_init'.
+:::
+::::
+
+Answer to @exr-51:
+
+```{r}
+#| label: ex-51-code
+
+lcs_init <- read_csv("data/training_lcs.csv", show_col_types = FALSE)
+
+tree_init <- read_csv("data/training_tree.csv", show_col_types = FALSE)
+```
+
+<!-- section 5.1.2 -->
+
+## Load ancillary data
+
+**Ancillary data are not collected in the field but useful for the analysis of field data.**
+
+In the training we use plot level environment factor (E) from Chave et al. 2014 and the NFI Phase 1 plot data. Ancillary data are loaded into a list to keep the environment tidy.
+
+```{r}
+anci <- list()
+
+anci$ph1    <- read_csv("data/training_anci_phase1.csv", show_col_types = FALSE)
+anci$plot_E <- read_csv("data/training_anci_plotE.csv", show_col_types = FALSE)
+```
+
+<!-- Section 5.1.3 -->
+
+## Visualize tree locations
+
+We visualize tree locations from the `tree_init` table with `ggplot()` and `geom_point()` to see if any potential error.
+
+Step-by-step for one subplot:
+
+-   Define `circ16` as tibble of 100 rows to draw a circular plot in ggplot, based on a radius and an angle "theta" $\theta$ in radian.
+
+-   Draw a ggplot with trees from the table `tree_init` in plot 631 and subplot "C", using `filter()`,
+
+-   Use `tree_x` and `tree_y` to show trees based on their location from the subplot center,
+
+-   Add plot boundary with `circ16`.
+
+```{r}
+circ16 <- tibble(
+  theta = seq(0, 2*pi, length = 100),
+  x = 16 * cos(theta),
+  y = 16 * sin(theta)
+)
+
+tree_init |>
+  filter(plot_no == 631, subplot_no == "C") |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point() +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+```
+
+Adapt the previous code to make a tree location map for the subplot '1A' and add different colors based on tree DBH size in @exr-52.
+
+:::: {.callout-tip appearance="simple"}
+<!-- EX 5.2 -->
+
+::: {#exr-52}
+## Make a tree location figure
+
+\linebreak
+
+-   create the table `circ08` similar to `circ16` but for a 8m radius circle.
+
+-   Filter within `tree` the trees from subplot '1A' with `filter()`.
+
+-   Use `mutate()` and `if_else()` to add a column `tree_dbh_cat` that has value "small" for trees with DBH \< 30 cm and "big" for the other trees.
+
+-   Make the figure of tree location with the 8m and 16m radius circles and change the color of trees based on `tree_dbh_cat`.
+:::
+::::
+
+Answer to @exr-52:
+
+```{r}
+#| label: ex-52-code
+
+circ08 <- tibble(
+  theta = seq(0, 2*pi, length = 100),
+  x = 8 * cos(theta),
+  y = 8 * sin(theta)
+)
+
+tree_init |> 
+  # filter(plot_no == 1, subplot_no == "A") |>
+  mutate(tree_dbh_cat = if_else(tree_dbh < 30, "small", "big")) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(aes(color = tree_dbh_cat)) +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed()
+```
+
+Visualizations can also be used to detect outliers. We use the example of small trees outside the nested subplot circle of 8m radius as guided exercise in @exr-53.
+
+:::: callout-tip
+<!-- EX 5.3 -->
+
+::: {#exr-53}
+## (Optional) detect outliers on graph
+
+\linebreak
+
+First, make a figure with tree location of all trees smaller than or equal to 30 cm with the 2 circles of 8 and 16 meters.
+
+-   use filter() to get all trees with DBH \<= 30 cm.
+
+-   make the ggplot of tree locations
+
+```{r}
+#| label: ex-03-1
+
+## Type here the answer to exercise 3 part 1
+
+
+```
+
+We can highlight outliers by making a specific table for them, they are trees with `tree_distance` \> 8m and `tree_dbh` \<= 30 cm. We can plot that table with big size point and a shape with no fill (see shape 21 to 24 in `help(pch)`.
+
+Make a new figure with:
+
+-   Create the table `outliers` containing trees with DBH \<= 30 and distance \> 8. Use `filter()`.
+
+-   Make the same figure as before and add a `geom_point()` with `data = outliers`, `shape = 23` and `size = 4` .
+
+```{r}
+#| label: ex-03-2
+
+## Type here the answer to exercise 3 part 2
+
+
+```
+:::
+
+TIP: here we added `alpha = 0.2` to the geometry of the trees. It make tree point semi-transparent and helps to detect potential measurement issues if we would detect patches with few trees.
+
+Now are these outliers measurement errors?
+
+-   Make the same graph as this exercise's part 1, but this time with tree DBH \< 30 and [**not**]{.underline} DBH \<= 30.
+
+```{r}
+#| label: ex-03-3
+
+## Type here the answer to exercise 3 part 3
+
+
+```
+
+Conclusion: the trees found outside the small circle were trees with DBH = 30 cm. They were not measurement errors, they were part of the big trees and therefore could be found outside the 8m radius circle.
+::::
+
+<!-- Section 5.2 -->
+
+## Find and correct errors
+
+One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programatically but often have to be solved manually.
+
+This section introduces how to use `group_by()` and `summarise()` to find duplicates in subplot IDs
+
+<!-- section 5.2.1 -->
+
+### Identify duplicates in subplot IDs
+
+Here we want to check within subplots if there are duplicates in subplot IDs (`subplot_id`) and plot numbers (`plot_no`) in the `subplot_init` table. The objective is to create a vector of subplot Ids that are duplicated. If there are no duplicate the vector will be of length 0.
+
+step-by-step:
+
+-   Create a vector `vec_dup` and assign it the following code sequence.
+
+-   Group the subplot table by subplot ID with `group_by()` and use `summarise()` to count the number of subplots that have each ID inside a new column `count`. Use the function `n()` to count.
+
+-   Filter all the subplot IDs that have a count bigger than 1 with `filter()`.
+
+-   Pull the subplot IDs.
+
+```{r}
+vec_dup <- subplot_init |>
+  group_by(subplot_id) |>
+  summarise(count = n(), .groups = "drop") |>
+  filter(count > 1) |>
+  pull(subplot_id)
+vec_dup
+```
+
+Notice the results as 3 subplots have duplicate `subplot_id`.
+
+Now practice the same code sequence to check if there are duplicates in `plot_no` in the @exr-54. Note that each plot ID should appears 4 times in the subplot table, one for each subplot, so duplicates are when `count > 4`.
+
+:::: {.callout-tip appearance="simple"}
+<!-- EX-04 -->
+
+::: {#exr-54}
+## Identify duplicates of plot number
+
+\linebreak
+
+-   Create `vec_dup2` similarly to `vec_dup`, but this time looking for plot_no that have more than 4 subplot IDs, so you will need to group by `plot_no` and filter `count > 4` and pull `plot_no`.
+
+```{r}
+
+
+
+```
+
+There should be no duplicates of `plot_no`.
+:::
+::::
+
+Answer to @exr-54:
+
+```{r}
+#| label: ex-54-code
+
+vec_dup2 <- subplot_init |>
+  group_by(plot_no) |>
+  summarise(count = n(), .groups = "drop") |>
+  filter(count > 4) |>
+  pull(plot_no)
+vec_dup2
+```
+
+There should be no duplicates of `plot_no`.
+
+<!-- Section 5.2.2 -->
+
+### Correct the subplot ID issues
+
+To correct the duplicates in subplot_id, we filter the subplots from one of the duplicated IDs and visually check what is wrong. In case one ID is missing and one is duplicated we use timestamps to identify which of the duplicates should be renamed.
+
+Then we can use `mutate()` and `case_when()` to apply correction in R.
+
+Step-by-step:
+
+-   Filter the subplots of one plot with duplicates: 631C.
+
+```{r}
+tt <- subplot_init |> filter(plot_no == 631)
+
+subplot <- subplot_init |>
+  mutate(
+    subplot_no = case_when(
+      subplot_id == "631C" & ONA_index == 109 ~ "B",
+      ## ADD more corrections,
+      TRUE ~ subplot_no
+    )
+  )
+
+
+```
+
+-   Visualize the table (run `View(tt)` or click `tt` in the Environment tab (top-right window in Rstudio).
+
+    -   In the case of '631C' there are 2 subplots C but no B. we can use time stamps to identify that `ONA_index` 109 should actually be for subplot B.
+
+-   Perform the correction using case_when() function for subplot_id 631C. At this stage only ONA_index is unique so it can be used to correctly identify the subplot to correct.
+
+```{r}
+subplot <- subplot_init |>
+  mutate(
+    subplot_no = case_when(
+      subplot_id == "631C" & ONA_index == 109 ~ "B",
+      ## ADD more corrections,
+      TRUE ~ subplot_no
+    )
+  )
+```
+
+You can now copy/paste the above R chunk and complete the correction for the 2 other subplot IDs with duplicates in @exr-55.
+
+Note: we correct `subplot_no` now, but we will need to remake `subplot_id` once `subplot_no` is correct.
+
+:::: {.callout-tip appearance="simple"}
+<!-- EX 5.5 -->
+
+::: {#exr-55}
+## Correct duplicates in subplot IDs
+
+\linebreak
+
+-   for each remaining duplicate, run the table `tt` with all subplots for the plot with duplicates
+
+-   Visualize `tt` and identify `ONA_index` of the subplot that should be corrected and what is the correct `subplot_no`.
+
+-   Copyu/paste the `subplot <- ...` sequence from above and fill in the `case_when()` with all the correction for the 3 duplicated subplots.
+:::
+::::
+
+Solution to @exr-55:
+
+```{r}
+#| label: ex-55-code
+
+subplot <- subplot_init |>
+  mutate(
+    subplot_no = case_when(
+      subplot_id == "631C" & ONA_index == 109 ~ "B",
+      subplot_id == "632C" & ONA_index == 113 ~ "B",
+      subplot_id == "553D" & ONA_index == 265 ~ "C",
+      TRUE ~ subplot_no
+    )
+  )
+```
+
+Now we can recreate `subplot_id` from the corrected `subplot_no`. Since `subplot_id` is a text field, we need to make it consistent for number of characters to ensure correct sorting of the rows. For this purpose we include texts "0" and "00" to make the number of characters consistent.
+
+```{r}
+subplot <- subplot |>
+  mutate(
+    subplot_id = case_when(
+      plot_no < 10 ~ paste0("00", plot_no, subplot_no),
+      plot_no < 100 ~ paste0("0", plot_no, subplot_no),
+      TRUE ~ paste0(plot_no, subplot_no)
+    )
+  )
+```
+
+Now if we re-run the `vec_dup` sequence with `subplot` instead of `subplot_init`, `vec_dup` should be of length 0.
+
+```{r}
+vec_dup <- subplot |>
+  group_by(subplot_id) |>
+  summarise(count = n(), .groups = "drop") |>
+  filter(count > 1) |>
+  pull(subplot_id)
+vec_dup
+```
+
+<!-- Section 5.2.3 -->
+
+### Check outliers in tree table
+
+The tree table we can check for outliers in numeric columns with the `summary()` function.
+
+For example with DBH:
+
+```{r}
+summary(tree_init$tree_dbh)
+```
+
+There are no trees with DBH \< 10 cm or unrealistically big DBH, all good.
+
+We can check for outliers in tree distance and azimuth in @exr-56.
+
+:::: {.callout-tip appearance="simple"}
+<!-- EX-06 -->
+
+::: {#exr-56}
+## Check azimuth and distance
+
+\linebreak
+
+-   Check that azimuth is between 0 and 360
+
+-   Check that distance is between 0 and 16
+
+No error found in distance or azimuth.
+:::
+::::
+
+Solution to @exr-56:
+
+```{r}
+#| label: ex-06
+
+summary(tree_init$tree_azimuth)
+summary(tree_init$tree_distance)
+```
+
+<!-- Section 5.3 -->
+
+## Assigning clean data to objects
+
+After resolving all errors, save the tables to the entity name without "\_init" suffix. This way we have both the initial and corrected version in the environment. If tehre were no errors the inital tables can be passed directly to the corrected tables:
+
+```{r}
+tree <- tree_init
+lcs <- lcs_init
+
+```
+
+Finally we can remove the temporary objects that won't be used later.
+
+```{r}
+rm(vec_dup, vec_dup2, tt, outliers)
+```
+
+**NOTE: use of temporary object list `tmp`.**
+
+In the main analysis the temporary objects are often stored in a list called `tmp`. This avoids cluttering the environment with temporary objects and makes it easy to remove them with `rm(tmp)`.
+
+```{r}
+#| eval: false
+
+## Create empty list
+tmp <- list()
+
+## Populate the list (example)
+tmp$outliers <- tree_init |> filter(tree_dbh <= 30, tree_distance > 8)
+
+## Remove temporary objects
+rm(tmp)
+
+```
+
+{{< pagebreak >}}
+
+# Session 06: data joins
+
+**Goals:**
+
+1.  Assign LCS number to trees
+
+2.  Join land cover and Chave E to trees
+
+<!-- Section 6.1 -->
+
+## Assign LCS number to trees
 
 Since the Land Cover Sections (LCS) are a mix of center square and outside disc portions, we need both tree position as distance $d$ and azimuth $az$ and as coordinates $(x, y)$.
 
@@ -105,12 +581,13 @@ tree <- tree |>
 
 ```
 
-We can now check if the code implementation worked with a visual check in @exr-01.
+We can now check if the code implementation worked with a visual check in @exr-61.
 
 :::: {.callout-warning appearance="simple"}
-<!-- EX-01 -->
+<!-- EX 61 -->
 
-::: {#exr-01}
+<div>
+
 ## Figure of tree locations
 
 \linebreak
@@ -130,15 +607,15 @@ Instructions:
 -   Add `coord_fixed()` to make sure the x and y axis have the same unit length.
 
 Check visually that the trees are positioned correctly based on their azimuth!
-:::
+
+</div>
 ::::
 
-Write here the answer to @exr-01:
+Answer to @exr-61:
 
 ```{r}
-#| label: ex-01
+#| label: ex-61-code
 
-## your code
 tree |>
   filter(plot_no == 123, subplot_no == "B") |>
   ggplot(aes(x = tree_x, y = tree_y)) +
@@ -151,13 +628,13 @@ tree |>
 
 ```
 
-<!-- Section 2-->
+<!-- Section 6.2-->
 
-# Join tables
+## Join tables
 
-<!-- Section 2.1 -->
+<!-- Section 6.2.1 -->
 
-## Prepare tables to join
+### Prepare tables to join
 
 We want to join 2 tables to the tree data:
 
@@ -178,11 +655,11 @@ tmp_lcs <- lcs |> select(-lcs_name)
 tmp_lcs <- lcs |> select(plot_no, subplot_no, lcs_no, lc_no, lc_code)
 ```
 
-<!-- Section 2.2 -->
+<!-- Section 6.2.2 -->
 
-## Make the joins
+### Make the joins
 
-### With changing object
+-   **With changing object**
 
 We join LCS (`tmp_lcs`) with the `tree` table using their common keys. In this case there are three keys: `plot_no`, `subplot_no` and `lcs_no`.
 
@@ -194,12 +671,13 @@ tree_join <- tree |>
 
 ```
 
-It is recommended to change object name when using join to avoid undesired suffixes. Undesired suffixes happen when we join the same tables twice or more by mistake. The second time we join two tables, since the new tables are already in the joined table, they will be passed again but this time with suffixes `.x` and `.y`. Observe undesired suffix in the @exr-02.
+It is recommended to change object name when using join to avoid undesired suffixes. Undesired suffixes happen when we join the same tables twice or more by mistake. The second time we join two tables, since the new tables are already in the joined table, they will be passed again but this time with suffixes `.x` and `.y`. Observe undesired suffix in the @exr-62.
 
 :::: {.callout-warning appearance="simple"}
-<!-- EX-02 -->
+<!-- EX 6.2 -->
 
-::: {#exr-02}
+<div>
+
 ## Undesired suffixes
 
 \linebreak
@@ -211,15 +689,15 @@ Instructions:
 -   Re-create `tree_err` by joining `tree_err` and `tmp_lcs`
 
 -   Run `names(tree_err)`
-:::
+
+</div>
 ::::
 
-Type here the answers to @exr-02:
+Answers to @exr-62:
 
 ```{r}
-#| label: ex-02
+#| label: ex-62-code
 
-## your code
 tree_err <- tree |> 
   left_join(tmp_lcs, by = join_by(plot_no, subplot_no, lcs_no))
 tree_err <- tree_err |> 
@@ -227,7 +705,7 @@ tree_err <- tree_err |>
 names(tree_err)
 ```
 
-## With keeping the same object name
+-   **With keeping the same object name**
 
 Often time we don't want to change object names for a join if we have a long sequence of modifications ahead. We can join and keep the same object names, but in this case we have to **control the suffixes**.
 
@@ -255,12 +733,12 @@ tree <- tree |>
 
 ```
 
-Practice 'joins with controlled suffix' to join Chave E at plot level from `anci$plot_E` with the @exr-03.
+Practice 'joins with controlled suffix' to join Chave E at plot level from `anci$plot_E` with the @exr-63.
 
 :::: {.callout-warning appearance="simple"}
-<!-- EX-03 -->
+<!-- EX 6.3 -->
 
-::: {#exr-03}
+::: {#exr-63}
 ## Join Chave E to the trees table
 
 \linebreak
@@ -279,10 +757,10 @@ After the join, check that there is no NAs in `plot_E` from `tree` with the func
 :::
 ::::
 
-Type here answers to @exr-03:
+Answers to @exr-63:
 
 ```{r}
-#| label: ex-03
+#| label: ex-63-code
 
 ## Your code
 # names(anci$plot_E)
@@ -295,12 +773,12 @@ tree <- tree |>
 summary(tree$plot_E)
 ```
 
-Now that we have land cover information at tree level we can make a figure of tree location with color based on land cover code in @exr-04.
+Now that we have land cover information at tree level we can make a figure of tree location with color based on land cover code in @exr-64.
 
 :::: {.callout-warning appearance="simple"}
-<!-- EX-04 -->
+<!-- EX 6.4 -->
 
-::: {#exr-04}
+::: {#exr-64}
 ## (optional) Figure of tree location with land cover
 
 \linebreak
@@ -323,12 +801,11 @@ Instructions:
 :::
 ::::
 
-Type here answers to @exr-04:
+Type here answers to @exr-64:
 
 ```{r}
-#| label: ex-04
+#| label: ex-64-code
 
-## Your code
 tree |> 
   filter(plot_no == 123, subplot_no == "B") |> 
   ggplot(aes(x = tree_x, y = tree_y)) + 
@@ -339,7 +816,9 @@ tree |>
   coord_fixed()
 ```
 
-## (optional) Final graph
+<!-- Section 6.2.3 -->
+
+### (optional) Final graph
 
 We can add the square center LCS with a specific table
 
@@ -359,3 +838,5 @@ tree |>
   coord_fixed()
 
 ```
+
+{{< pagebreak >}}

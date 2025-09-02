@@ -73,7 +73,7 @@ Let's calculate where this value 4 comes from in @exr-71.
 
 Instructions:
 
--    Calculate 'Asmall' as the area of a circle of 8m radius
+-   Calculate 'Asmall' as the area of a circle of 8m radius
 
 -   Calculate 'Abig' as the area of a circle of 16m radius
 
