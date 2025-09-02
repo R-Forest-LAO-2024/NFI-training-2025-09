@@ -49,7 +49,9 @@ source(here("R/SOL-05-data-preparation.R"))
 
 Since the Land Cover Sections (LCS) are a mix of center square and outside disc portions, we need both tree position as distance $d$ and azimuth $az$ and as coordinates $(x, y)$.
 
-See the classroom presentation: "main calculations" for explanations on converting distance $d$ and angle $\theta$ to coordinates $(x, y)$ for the subplot center, and converting distance $d$ and azimuth $az$ to coordinates $(x, y)$.
+See the classroom presentation: "main calculations, TIP02" for explanations on converting distance $d$ and angle $\theta$ to coordinates $(x, y)$ for the subplot center, and converting distance $d$ and azimuth $az$ to coordinates $(x, y)$.
+
+![Conversion of distance/azimuth to x, y](img/TIP01.png)
 
 The R implementation is as follows:
 
@@ -66,9 +68,13 @@ tree <- tree |>
 
 Once we have tree coordinates, we can assign LCS with `case_when()`, identifying trees in the center square first (with their coordinates), then the outer disc portion based on azimuth:
 
--   To be inside the center square, trees must have their coordinates $(x, y)$ both between -6 and 6 meters, or their absolute value smaller or equal to 6: $-6 \le x \le 6 = |x| \le 6$
+-   To be inside the **center square**, trees must have their coordinates $(x, y)$ both between -6 and 6 meters, or their absolute value smaller or equal to 6:
 
--   To be in one of the outer disc portion, trees must not be in the center square and be respectively positioned between NW and NE lines, NE and SE, SE and SW or SW and NW for the north, east, south and west disc portions. These lines' azimuth are 315, 45, 135, 215 degrees respectively for NW, NE, SE and SW lines.
+    $$
+    -6 \le x \le 6 \Leftrightarrow |x| \le 6 \\ -6 \le y \le 6 \Leftrightarrow |y| \le 6
+    $$
+
+-   To be in one of the **outer disc portions**, trees must not be in the center square and be respectively positioned between NW and NE lines, NE and SE, SE and SW or SW and NW for the north, east, south and west disc portions. These lines' azimuth are 315, 45, 135, 215 degrees respectively for NW, NE, SE and SW lines.
 
 R implementation:
 
@@ -101,19 +107,19 @@ We can now check if the code implementation worked with a visual check in @exr-0
 
 Instructions:
 
--   Filter the tree data for subplot '631C'
+-   Filter the tree data for subplot '**123B**'.
 
--   Make a base figure with `geom_point()`
+-   Make a base figure with `geom_point().`
 
--   Add subplot boundaries with `geom_path()` and `circ16`
+-   Add subplot boundaries with `geom_path()` and `circ16`.
 
--   Add cardinal lines with `geom_hline(yintercept = 0)` and `geom_vline(xintercept = 0)`
+-   **Add cardinal lines with `geom_hline(yintercept = 0)` and `geom_vline(xintercept = 0).`**
 
--   Add azimuth to each tree as labels with `geom_label_repel()`.
+-   **Add azimuth to each tree as labels with `geom_label_repel()`**.
 
 -   Add `coord_fixed()` to make sure the x and y axis have the same unit length.
 
-Check visually that the trees are positioned correctly based on their azimuth
+Check visually that the trees are positioned correctly based on their azimuth!
 :::
 ::::
 
@@ -123,6 +129,15 @@ Write here the answer to @exr-01:
 #| label: ex-01
 
 ## your code
+tree |>
+  filter(plot_no == 123, subplot_no == "B") |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(aes(color = as.character(lcs_no))) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_label_repel(aes(label = tree_azimuth), min.segment.length = 0) +
+  coord_fixed()
 
 ```
 
@@ -195,27 +210,31 @@ Type here the answers to @exr-02:
 #| label: ex-02
 
 ## your code
-
+tree_err <- tree |> 
+  left_join(tmp_lcs, by = join_by(plot_no, subplot_no, lcs_no))
+tree_err <- tree_err |> 
+  left_join(tmp_lcs, by = join_by(plot_no, subplot_no, lcs_no))
+names(tree_err)
 ```
 
 ## With keeping the same object name
 
-Often time we don't want to change object names for a join if we have a long sequence of modifications ahead. We can join and keep the same object names, but in this case we have to control the suffixes.
+Often time we don't want to change object names for a join if we have a long sequence of modifications ahead. We can join and keep the same object names, but in this case we have to **control the suffixes**.
 
 Step-by-step:
 
-1.  Identify the new column passed from the table to join.
+1.  Identify the **new column** passed from the table to join.
 
-2.  Create these columns in the receiving table with NAs using `mutate()`,
+2.  **Create these columns in the receiving table** with NAs using `mutate()`,
 
-3.  Join the tables and add suffixes "\_rm" to the receiving table with NAs and "" to the joined columns,
+3.  **Join the tables and add suffixes** "\_rm" to the receiving table with NAs and "" to the joined columns,
 
-4.  Remove the columns that end with "\_rm" (since they contains NAs).
+4.  **Remove the columns** that end with "\_rm" (since they contains NAs).
 
 ```{r}
 #| label: join-nochange
 
-## 1. Columns to be passed are lc_no and lc_code
+## 1. Columns to be passed are 'lc_no' and 'lc_code'
 tree <- tree |>
   ## 2. Create these columns with NAs
   mutate(lc_no = NA, lc_code = NA) |> 
@@ -242,9 +261,9 @@ Instructions:
 
 -   from `tree`, create a column with NAs that has the same name as the column from `anci$plot_E` that we want in `tree`
 
--   Join the 2 tables and control the suffixes
+-   Join the 2 tables and control the suffixes ( add `suffix = c("_rm", "")` )
 
--   Remove the initial column with NAs
+-   Remove the initial column with NAs (they have now suffix "\_rm")
 
 After the join, check that there is no NAs in `plot_E` from `tree` with the function `summary().`
 :::
@@ -256,7 +275,14 @@ Type here answers to @exr-03:
 #| label: ex-03
 
 ## Your code
+# names(anci$plot_E)
 
+tree <- tree |>
+  mutate(plot_E = NA) |>
+  left_join(anci$plot_E, by = join_by(plot_no), suffix = c("_rm", "")) |>
+  select(-ends_with("_rm"))
+
+summary(tree$plot_E)
 ```
 
 Now that we have land cover information at tree level we can make a figure of tree location with color based on land cover code in @exr-04.
