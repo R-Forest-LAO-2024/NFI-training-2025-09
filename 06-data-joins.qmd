@@ -1,6 +1,6 @@
 ---
 title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
-subtitle: "Session 05: data preparation"
+subtitle: "Session 06: data joins"
 date: "01-05 Sep 2025"
 number-sections: true
 toc: true
@@ -24,399 +24,295 @@ editor: visual
 
 # Goals {.unnumbered}
 
-1.  Load initial tables and visualize core data
+1.  Assign LCS number to trees
 
-2.  Correct errors in subplot table (duplicates in subplot_id)
+2.  Join land cover and Chave E to trees
 
 # Setup {.unnumbered}
 
-Load packages by sourcing a script with `source()`.
+We load libraries and run the code for loading data in the solution script 05 to have our setup ready for data joins
 
 ```{r}
+#| label: setup
 #| output: false
  
 ## Useful when sourcing script from Quarto doc.
 if (!require(here)) install.packages("here"); library(here)
 
-## Load packages
 source(here("R/00-load-packages.R"))
+source(here("R/SOL-05-data-preparation.R"))
 ```
 
 <!-- Section 1 -->
 
-# Load harmonized tables and ancillary data
+# Assign LCS number to trees
 
-<!-- Section 1.1 -->
+Since the Land Cover Sections (LCS) are a mix of center square and outside disc portions, we need both tree position as distance $d$ and azimuth $az$ and as coordinates $(x, y)$.
 
-## Load subplot, lcs, tree tables from NFI
+See the classroom presentation: "main calculations" for explanations on converting distance $d$ and angle $\theta$ to coordinates $(x, y)$ for the subplot center, and converting distance $d$ and azimuth $az$ to coordinates $(x, y)$.
 
-We can read tables or CSV files from the computer with the function `read_csv()`. We can store the initial table in objects with the suffix '\_init' to keep the initial version in the environment.
-
-Example: read the table 'training_subplot.csv' from the computer into the object `subplot_init`:
+The R implementation is as follows:
 
 ```{r}
-subplot_init <- read_csv("data/training_subplot.csv", show_col_types = FALSE)
+#| label: tree-coords
+
+tree <- tree |> 
+  mutate( 
+    tree_x = cos((90 - tree_azimuth) * pi/180) * tree_distance, 
+    tree_y = sin((90 - tree_azimuth) * pi/180) * tree_distance, 
+    )
+
 ```
 
-Load the tables 'training_tree.csv' and 'training_lcs.csv' in the next exercise (@exr-01).
+Once we have tree coordinates, we can assign LCS with `case_when()`, identifying trees in the center square first (with their coordinates), then the outer disc portion based on azimuth:
 
-:::: {.callout-tip appearance="simple"}
+-   To be inside the center square, trees must have their coordinates $(x, y)$ both between -6 and 6 meters, or their absolute value smaller or equal to 6: $-6 \le x \le 6 = |x| \le 6$
+
+-   To be in one of the outer disc portion, trees must not be in the center square and be respectively positioned between NW and NE lines, NE and SE, SE and SW or SW and NW for the north, east, south and west disc portions. These lines' azimuth are 315, 45, 135, 215 degrees respectively for NW, NE, SE and SW lines.
+
+R implementation:
+
+```{r}
+#| label: tree-lcs
+
+tree <- tree |>
+  mutate(
+    lcs_no = case_when(
+      abs(tree_x) <= 6 & abs(tree_y) <= 6     ~ 1,
+      tree_azimuth > 315 | tree_azimuth <=45  ~ 2,
+      tree_azimuth >  45 & tree_azimuth <=135 ~ 3,
+      tree_azimuth > 135 & tree_azimuth <=225 ~ 4,
+      tree_azimuth > 225 & tree_azimuth <=315 ~ 5,
+      TRUE ~ NA_integer_
+    )
+  )
+
+```
+
+We can now check if the code implementation worked with a visual check in @exr-01.
+
+:::: {.callout-warning appearance="simple"}
 <!-- EX-01 -->
 
 ::: {#exr-01}
-## Load 'training_tree.csv' and 'training_lcs.csv' tables
+## Figure of tree locations
 
 \linebreak
 
--   Load the table 'training_lcs.csv' in the R objects 'lcs_init'.
--   Load the table 'training_tree.csv' in the R objects 'tree_init'.
+Instructions:
 
-```{r}
-#| label: ex-01-code
+-   Filter the tree data for subplot '631C'
 
-## Type here the answer to exercise 1
+-   Make a base figure with `geom_point()`
 
-```
+-   Add subplot boundaries with `geom_path()` and `circ16`
+
+-   Add cardinal lines with `geom_hline(yintercept = 0)` and `geom_vline(xintercept = 0)`
+
+-   Add azimuth to each tree as labels with `geom_label_repel()`.
+
+-   Add `coord_fixed()` to make sure the x and y axis have the same unit length.
+
+Check visually that the trees are positioned correctly based on their azimuth
 :::
 ::::
 
-<!-- section 1.2 -->
-
-## Load ancillary data
-
-**Ancillary data are not collected in the field but useful for the analysis of field data.**
-
-In the training we use plot level environment factor (E) from Chave et al. 2014 and the NFI Phase 1 plot data. Ancillary data are loaded into a list to keep the environment tidy.
+Write here the answer to @exr-01:
 
 ```{r}
-anci <- list()
+#| label: ex-01
 
-anci$ph1    <- read_csv("data/training_anci_phase1.csv", show_col_types = FALSE)
-anci$plot_E <- read_csv("data/training_anci_plotE.csv", show_col_types = FALSE)
+## your code
+
 ```
 
-<!-- Section 1.3 -->
+<!-- Section 2-->
 
-## Visualize tree locations
+# Join tables
 
-We visualize tree locations from the `tree_init` table with `ggplot()` and `geom_point()` to see if any potential error.
+<!-- Section 2.1 -->
 
-Step-by-step for one subplot:
+## Prepare tables to join
 
--   Define `circ16` as tibble of 100 rows to draw a circular plot in ggplot, based on a radius and an angle "theta" $\theta$ in radian.
+We want to join 2 tables to the tree data:
 
--   Draw a ggplot with trees from the table `tree_init` in plot 631 and subplot "C", using `filter()`,
+-   Chave et al. 2014 environment factor $E$ from the table `anci$plot_E`,
 
--   Use `tree_x` and `tree_y` to show trees based on their location from the subplot center,
+-   Land cover code from the table `lcs`,
 
--   Add plot boundary with `circ16`.
+Sometimes we don't want all the columns from a tables to be passed on to `tree`. In this case we create a temporary tables with only the **key(s)** = the matching column(s) between two tables to join, and the information to pass.
+
+For example, we don't want `lcs_name` from `lcs` to go to trees, we already have `lcs_no` as key between the two tables. We can either remove the undesired column or keep all other columns. In this case, removing is faster, but for sustainability, it is preferable to write the columns you want to keep so that when you re-open this document in a few weeks you see directly what is kept.
 
 ```{r}
-circ16 <- tibble(
-  theta = seq(0, 2*pi, length = 100),
-  x = 16 * cos(theta),
-  y = 16 * sin(theta)
-)
+#| label: prepa-lcs
 
-tree_init |>
-  filter(plot_no == 631, subplot_no == "C") |>
-  ggplot(aes(x = tree_x, y = tree_y)) +
-  geom_point() +
-  geom_path(data = circ16, aes(x = x, y = y)) +
-  coord_fixed()
+tmp_lcs <- lcs |> select(-lcs_name)
+
+## Same but preferable:
+tmp_lcs <- lcs |> select(plot_no, subplot_no, lcs_no, lc_no, lc_code)
 ```
 
-Adapt the previous code to make a tree location map for the subplot '1A' and add different colors based on tree DBH size in @exr-02.
+<!-- Section 2.2 -->
 
-:::: {.callout-tip appearance="simple"}
+## Make the joins
+
+### With changing object
+
+We join LCS (`tmp_lcs`) with the `tree` table using their common keys. In this case there are three keys: `plot_no`, `subplot_no` and `lcs_no`.
+
+```{r}
+#| label: join-change
+
+tree_join <- tree |> 
+  left_join(tmp_lcs, by = join_by(plot_no, subplot_no, lcs_no))
+
+```
+
+It is recommended to change object name when using join to avoid undesired suffixes. Undesired suffixes happen when we join the same tables twice or more by mistake. The second time we join two tables, since the new tables are already in the joined table, they will be passed again but this time with suffixes `.x` and `.y`. Observe undesired suffix in the @exr-02.
+
+:::: {.callout-warning appearance="simple"}
 <!-- EX-02 -->
 
 ::: {#exr-02}
-## Make a tree location figure
+## Undesired suffixes
 
 \linebreak
 
--   create the table `circ08` similar to `circ16` but for a 8m radius circle.
+Instructions:
 
--   Filter within `tree` the trees from subplot '1A' with `filter()`.
+-   Create `tree_err` by joining `tree` and `tmp_lcs`
 
--   Use `mutate()` and `if_else()` to add a column `tree_dbh_cat` that has value "small" for trees with DBH \< 30 cm and "big" for the other trees.
+-   Re-create `tree_err` by joining `tree_err` and `tmp_lcs`
 
--   Make the figure of tree location with the 8m and 16m radius circles and change the color of trees based on `tree_dbh_cat`.
-
-```{r}
-#| label: ex-02-code
-
-## Type here the answer to exercise 2
-
-
-```
+-   Run `names(tree_err)`
 :::
 ::::
 
-Visualizations can also be used to detect outliers. We use the example of small trees outside the nested subplot circle of 8m radius as guided exercise in @exr-03.
+Type here the answers to @exr-02:
 
-:::: callout-tip
+```{r}
+#| label: ex-02
+
+## your code
+
+```
+
+## With keeping the same object name
+
+Often time we don't want to change object names for a join if we have a long sequence of modifications ahead. We can join and keep the same object names, but in this case we have to control the suffixes.
+
+Step-by-step:
+
+1.  Identify the new column passed from the table to join.
+
+2.  Create these columns in the receiving table with NAs using `mutate()`,
+
+3.  Join the tables and add suffixes "\_rm" to the receiving table with NAs and "" to the joined columns,
+
+4.  Remove the columns that end with "\_rm" (since they contains NAs).
+
+```{r}
+#| label: join-nochange
+
+## 1. Columns to be passed are lc_no and lc_code
+tree <- tree |>
+  ## 2. Create these columns with NAs
+  mutate(lc_no = NA, lc_code = NA) |> 
+  ## 3. join with controlled suffix names
+  left_join(tmp_lcs, by = join_by(plot_no, subplot_no, lcs_no), suffix = c("_rm", "")) |> 
+  ## 4. remove initial columns with NAs
+  select(-ends_with("_rm"))
+
+```
+
+Practice 'joins with controlled suffix' to join Chave E at plot level from `anci$plot_E` with the @exr-03.
+
+:::: {.callout-warning appearance="simple"}
 <!-- EX-03 -->
 
 ::: {#exr-03}
-## (Optional) detect outliers on graph
+## Join Chave E to the trees table
 
 \linebreak
 
-First, make a figure with tree location of all trees smaller than or equal to 30 cm with the 2 circles of 8 and 16 meters.
+Instructions:
 
--   use filter() to get all trees with DBH \<= 30 cm.
+-   Identify which column from `anci$plot_E` to pass to `tree` and which column is the key
 
--   make the ggplot of tree locations
+-   from `tree`, create a column with NAs that has the same name as the column from `anci$plot_E` that we want in `tree`
 
-```{r}
-#| label: ex-03-1
+-   Join the 2 tables and control the suffixes
 
-## Type here the answer to exercise 3 part 1
+-   Remove the initial column with NAs
 
-
-```
-
-We can highlight outliers by making a specific table for them, they are trees with `tree_distance` \> 8m and `tree_dbh` \<= 30 cm. We can plot that table with big size point and a shape with no fill (see shape 21 to 24 in `help(pch)`.
-
-Make a new figure with:
-
--   Create the table `outliers` containing trees with DBH \<= 30 and distance \> 8. Use `filter()`.
-
--   Make the same figure as before and add a `geom_point()` with `data = outliers`, `shape = 23` and `size = 4` .
-
-```{r}
-#| label: ex-03-2
-
-## Type here the answer to exercise 3 part 2
-
-
-```
+After the join, check that there is no NAs in `plot_E` from `tree` with the function `summary().`
 :::
-
-TIP: here we added `alpha = 0.2` to the geometry of the trees. It make tree point semi-transparent and helps to detect potential measurement issues if we would detect patches with few trees.
-
-Now are these outliers measurement errors?
-
--   Make the same graph as this exercise's part 1, but this time with tree DBH \< 30 and [**not**]{.underline} DBH \<= 30.
-
-```{r}
-#| label: ex-03-3
-
-## Type here the answer to exercise 3 part 3
-
-
-```
-
-Conclusion: the trees found outside the small circle were trees with DBH = 30 cm. They were not measurement errors, they were part of the big trees and therefore could be found outside the 8m radius circle.
 ::::
 
-<!-- Section 2 -->
-
-# Find and correct errors
-
-One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programatically but often have to be solved manually.
-
-This section introduces how to use `group_by()` and `summarise()` to find duplicates in subplot IDs
-
-<!-- section 2.1 -->
-
-## Identify duplicates in subplot IDs
-
-Here we want to check within subplots if there are duplicates in subplot IDs (`subplot_id`) and plot numbers (`plot_no`) in the `subplot_init` table. The objective is to create a vector of subplot Ids that are duplicated. If there are no duplicate the vector will be of length 0.
-
-step-by-step:
-
--   Create a vector `vec_dup` and assign it the following code sequence.
-
--   Group the subplot table by subplot ID with `group_by()` and use `summarise()` to count the number of subplots that have each ID inside a new column `count`. Use the function `n()` to count.
-
--   Filter all the subplot IDs that have a count bigger than 1 with `filter()`.
-
--   Pull the subplot IDs.
+Type here answers to @exr-03:
 
 ```{r}
-vec_dup <- subplot_init |>
-  group_by(subplot_id) |>
-  summarise(count = n(), .groups = "drop") |>
-  filter(count > 1) |>
-  pull(subplot_id)
-vec_dup
+#| label: ex-03
+
+## Your code
+
 ```
 
-Notice the results as 3 subplots have duplicate `subplot_id`.
+Now that we have land cover information at tree level we can make a figure of tree location with color based on land cover code in @exr-04.
 
-Now practice the same code sequence to check if there are duplicates in `plot_no` in the @exr-04. Note that each plot ID should appears 4 times in the subplot table, one for each subplot, so duplicates are when `count > 4`.
-
-:::: {.callout-tip appearance="simple"}
+:::: {.callout-warning appearance="simple"}
 <!-- EX-04 -->
 
 ::: {#exr-04}
-## Identify duplicates of plot number
+## (optional) Figure of tree location with land cover
 
 \linebreak
 
--   Create `vec_dup2` similarly to `vec_dup`, but this time looking for plot_no that have more than 4 subplot IDs, so you will need to group by `plot_no` and filter `count > 4` and pull `plot_no`.
+Instructions:
+
+-   Remake the figure of EX-01 with these differences:
+
+-   Change the color of trees based on lc_code
+
+-   Remove geom_label_repel() to show the azimuths
+
+-   Remove hline and vline
+
+-   Add geom_abline() with intercept = 0 and slope = 1
+
+-   Add geom_abline() with intercept = 0 and slope = -1
+
+-   Check visually that different land cover are in different quadrants
+:::
+::::
+
+Type here answers to @exr-04:
 
 ```{r}
 #| label: ex-04
 
-## Type here the answer to exercise 4
-
-
-```
-
-There should be no duplicates of `plot_no`.
-:::
-::::
-
-## Correct the subplot ID issues
-
-To correct the duplicates in subplot_id, we filter the subplots from one of the duplicated IDs and visually check what is wrong. In case one ID is missing and one is duplicated we use timestamps to identify which of the duplicates should be renamed.
-
-Then we can use `mutate()` and `case_when()` to apply correction in R.
-
-Step-by-step:
-
--   Filter the subplots of one plot with duplicates: 631C.
-
-```{r}
-tt <- subplot_init |> filter(plot_no == 631)
-```
-
--   Visualize the table (run `View(tt)` or click `tt` in the Environment tab (top-right window in Rstudio).
-
-    -   In the case of '631C' there are 2 subplots C but no B. we can use timestamps to identify that `ONA_index` 109 should actually be for subplot B.
-
--   Perform the correction using case_when() function for subplot_id 631C. At this stage only ONA_index is unique so it can be used to correctly identify the subplot to correct.
-
-```{r}
-subplot <- subplot_init |>
-  mutate(
-    subplot_no = case_when(
-      subplot_id == "631C" & ONA_index == 109 ~ "B",
-      ## ADD more corrections,
-      TRUE ~ subplot_no
-    )
-  )
-```
-
-You can now copy/paste the above R chunk and complete the correction for the 2 other subplot IDs with duplicates in @exr-05.
-
-Note: we correct `subplot_no` now, but we will need to remake `subplot_id` once `subplot_no` is correct.
-
-:::: {.callout-tip appearance="simple"}
-<!-- EX-05 -->
-
-::: {#exr-05}
-## Correct duplicates in subplot IDs
-
-\linebreak
-
--   for each remaining duplicate, run the table `tt` with all subplots for the plot with duplicates
-
--   Visualize `tt` and identify `ONA_index` of the subplot that should be corrected and what is the correct `subplot_no`.
-
--   Copyu/paste the `subplot <- ...` sequence from above and fill in the `case_when()` with all the correction for the 3 duplicated subplots.
-
-```{r}
-#| label: ex-05
-
-## Type here the answer to exercise 5
-
-
-```
-:::
-::::
-
-Now we can recreate `subplot_id` from trhe corrected `subplot_no`. Since `subplot_id` is a text field, we need to make it consistent for number of characters to ensure correct sorting of the rows. For this purpose we include texts "0" and "00" to make the number of characters consistent.
-
-```{r}
-subplot <- subplot_init |>
-  mutate(
-    subplot_id = case_when(
-      plot_no < 10 ~ paste0("00", plot_no, subplot_no),
-      plot_no < 100 ~ paste0("0", plot_no, subplot_no),
-      TRUE ~ paste0(plot_no, subplot_no)
-    )
-  )
-```
-
-Now if we re-run the `vec_dup` sequence with `subplot` instead of `subplot_init`, `vec_dup` should be of length 0.
-
-```{r}
-vec_dup <- subplot |>
-  group_by(subplot_id) |>
-  summarise(count = n(), .groups = "drop") |>
-  filter(count > 1) |>
-  pull(subplot_id)
-vec_dup
-```
-
-## Check outliers in tree table
-
-The tree table we can check for outliers in numeric columns with the `summary()` function.
-
-For example with DBH:
-
-```{r}
-summary(tree_init$tree_dbh)
-```
-
-There are no trees with DBH \< 10 cm or unrealistically big DBH, all good.
-
-We can check for outliers in tree distance and azimuth in @exr-06.
-
-:::: {.callout-tip appearance="simple"}
-<!-- EX-06 -->
-
-::: {#exr-06}
-## Check azimuth and distance
-
-\linebreak
-
--   Check that azimuth is between 0 and 360
-
--   Check that distance is between 0 and 16
-
-```{r}
-#| label: ex-06
-
-## Type here the answer to exercise 6
+## Your code
 
 ```
 
-No error found in distance or azimuth.
-:::
-::::
+## (optional) Final graph
 
-After resolving all errors, save the tables to the entity name without "\_init" suffix. This way we have both the initial and corrected version in the environment. If tehre were no errors the inital tables can be passed directly to the corrected tables:
+We can add the square center LCS with a specific table
 
 ```{r}
-tree <- tree_init
-lcs <- lcs_init
+#| label: full-graph
 
-```
+center_sq <- tibble(x = c(-6, 6, 6, -6, -6), y = c(6, 6, -6, -6, 6))
 
-Finally we can remove the temporary objects that won't be used later.
-
-```{r}
-rm(vec_dup, vec_dup2, tt, outliers)
-```
-
-NOTE: In the main analysis the temporary objects are often stored in a list called `tmp`. This avoids cluttering the environment with temporary objects and makes it easy to remove them with `rm(tmp)`.
-
-```{r}
-#| eval: false
-
-## Create empty list
-tmp <- list()
-
-## Populate the list (example)
-tmp$outliers <- tree_init |> filter(tree_dbh <= 30, tree_distance > 8)
-
-## Remove temporary objects
-rm(tmp)
+tree |> 
+  filter(plot_no == 123, subplot_no == "B") |> 
+  ggplot(aes(x = tree_x, y = tree_y)) + 
+  geom_point(aes(color = lc_code)) + 
+  geom_path(data = circ16, aes(x = x, y = y)) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_abline(intercept = 0, slope = -1) + 
+  geom_path(data= center_sq, aes(x = x, y = y)) +
+  coord_fixed()
 
 ```
