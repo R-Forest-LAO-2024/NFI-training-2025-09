@@ -4,7 +4,7 @@
 ## 2. tree weight for subplot per ha values
 
 ## In the context of ratio estimator tree weight converts small size trees 
-## to the are of the bigger sized trees
+## to the area of the bigger sized trees
 
 ## 1. tree weight for ratio estimator ####
 

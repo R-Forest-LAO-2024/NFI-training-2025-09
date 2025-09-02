@@ -145,7 +145,7 @@ tree |>
 
 We want to join 2 tables to the tree data:
 
--    Chave et al. 2014 environment factor $E$ from the table `anci$plot_E`,
+-   Chave et al. 2014 environment factor $E$ from the table `anci$plot_E`,
 
 -   Land cover code from the table `lcs`,
 
@@ -190,7 +190,7 @@ It is recommended to change object name when using join to avoid undesired suffi
 
 Instructions:
 
--    Create `tree_err` by joining `tree` and `tmp_lcs`
+-   Create `tree_err` by joining `tree` and `tmp_lcs`
 
 -   Re-create `tree_err` by joining `tree_err` and `tmp_lcs`
 
@@ -327,7 +327,7 @@ tree |>
 
 ```
 
-## (optional) Final graph 
+## (optional) Final graph
 
 We can add the square center LCS with a specific table
 

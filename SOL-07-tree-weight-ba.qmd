@@ -1,0 +1,200 @@
+---
+title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
+subtitle: "Session 06: data joins"
+date: "01-05 Sep 2025"
+number-sections: true
+toc: true
+toc-depth: 2
+highlight-style: github
+theme: 
+  light: flatly
+  dark: darkly
+format: 
+  html: 
+    toc-location: left
+    embed-resources: true
+  docx:
+    reference-doc: custom-reference-doc.docx
+  pdf: 
+    documentclass: scrartcl
+    papersize: A4
+    colorlinks: true
+editor: visual
+---
+
+# Goals {.unnumbered}
+
+1.  Calculate tree weights for ratio estimators and for subplot per ha values
+
+2.  Calculate tree basal area
+
+# Setup {.unnumbered}
+
+```{r}
+#| label: setup
+#| output: false
+ 
+## Useful when sourcing script from Quarto doc.
+if (!require(here)) install.packages("here"); library(here)
+
+source(here("R/00-load-packages.R"))
+source(here("R/SOL-05-data-preparation.R"))
+source(here("R/SOL-06-data-joins.R"))
+```
+
+<!-- Section 1 -->
+
+# Tree weights for nested circles adjustment
+
+<!-- Section 1.1 -->
+
+## Tree weight for ratio estimator
+
+In the context of **ratio estimator,** tree weight converts small size trees' variables to their equivalent if small trees were measured in the same area as the bigger sized trees.
+
+For Lao PDR, the ratio between small and big trees is 4:
+
+```{r}
+#| label: weight_re
+
+tree <- tree |> mutate(tree_weight = if_else(tree_dbh < 30, 4, 1))
+
+```
+
+Let's calculate where this value 4 comes from in @exr-71.
+
+:::: {.callout-warning appearance="simple"}
+<!-- Ex 7.1 -->
+
+::: {#exr-71}
+## Where does weight 4 come from?
+
+\linebreak
+
+Instructions:
+
+-    Calculate 'Asmall' as the area of a circle of 8m radius
+
+-   Calculate 'Abig' as the area of a circle of 16m radius
+
+-   Calculate Abig / Asmall
+:::
+::::
+
+Type here answers to @exr-71:
+
+```{r}
+#| label: ex-71
+
+## Your code here
+
+##!!! SOL
+Asmall <- pi * 8^2 
+Abig   <- pi * 16^2
+Abig / Asmall 
+## !!!
+```
+
+<!-- Section 1.2 -->
+
+## Tree weight for subplot per ha values
+
+To get per ha at the subplot level, we first assign to each tree its subplot nested circle area, then the weight is the inverse of this area
+
+```{r}
+#| label: weight_sperr
+
+tree <- tree |> 
+  mutate( 
+    tree_spha = if_else(tree_dbh < 30, pi * 16^2 / 10000, pi * 16^2 / 10000),
+    tree_weight_spha = 1 / tree_spha
+  )
+
+```
+
+There might be an error in the above code snippet, let's solve it in @exr-72.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 7.2 -->
+
+::: {#exr-72}
+## Find the error
+
+\linebreak
+
+Instructions:
+
+-   Copy/paste the previous code snippet
+
+-   Find and correct the error in `tree_spha`
+:::
+::::
+
+Type here answers to @exr-72:
+
+```{r}
+#| label: ex-72
+
+## Your code here
+
+##!!! SOL
+tree <- tree |> mutate( 
+  tree_spha = if_else(tree_dbh < 30, pi * 8^2 / 10000, pi * 16^2 / 10000), 
+  tree_weight_spha = 1 / tree_spha 
+  )
+## !!!
+```
+
+<!-- Section 2 -->
+
+## Calculate tree basal area
+
+The basal area of a tree is its stem area footprint based on the measurement of it diameter at breast height.
+
+```{r}
+#| label: tree-ba
+
+tree <- tree |> mutate(tree_ba = pi * (tree_dbh/200)^2)
+
+```
+
+Let's check subplot level basal area per land cover class in @exr-73.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 7.3 -->
+
+::: {#exr-73}
+## (optional) Basal area per subplot
+
+\linebreak
+
+Instructions:
+
+-   From tree, use `group_by()` and `summarise()` to create `subplot_ba`, the sum of `tree_ba * tree_weight_spha` per plot and subplot number,
+
+-   Join `lc_class_center` from the `subplot` table using suffix control,
+
+-   Make a boxplot of `subplot_ba` against `lc_class_center`.
+:::
+::::
+
+Type here answers to @exr-73:
+
+```{r}
+#| label: ex-73
+
+
+## Your code here
+## !!! SOL
+tmp_sp <- subplot |> select(plot_no, subplot_no, subplot_lc_class_center) 
+
+tree |> 
+  group_by(plot_no, subplot_no) |> 
+  summarise(subplot_ba = sum(tree_ba * tree_weight_spha), .groups = "drop") |> 
+  left_join(tmp_sp, by = join_by(plot_no, subplot_no)) |> 
+  ggplot(aes(x = subplot_lc_class_center, y = subplot_ba)) + 
+  geom_boxplot() + 
+  geom_jitter(alpha = 0.1, shape = 21) ## bonus to see the observations on top of the boxplot
+## !!!
+
+```
