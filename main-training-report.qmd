@@ -22,6 +22,16 @@ format:
 editor: visual
 ---
 
+Context
+
+This training contains all the code presented and the exercises with solutions for the "**Training workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle**", held in FIPD office, Vientiane, Lao PDR, from 1st to 5th September 2025.
+
+The training objective was to:
+
+1.  Continue build capacities of FIPD in forest data analysis with R and Rstudio.
+2.  Present the code base used for analyzing the 4th National Forest Inventory of Lao PDR, implemented in 2024 and 2025.
+3.  Explore opportunities to build a R community with research institutions and the civil society to help each other build analytical skills and deal with complex data analysis in the forest, ecology and environment sectors.
+
 # Goals {.unnumbered}
 
 1.  Assign LCS number to trees
