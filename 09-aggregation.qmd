@@ -38,15 +38,16 @@ source(here("R/SOL-05-data-preparation.R"))
 source(here("R/SOL-06-data-joins.R"))
 source(here("R/SOL-07a-tree-weight.R"))
 source(here("R/SOL-07b-tree-basal-area.R"))
+source(here("R/SOL-08a-tree-agb.R"))
 ```
 
-# Session 09: Aggregate tree to forest type
+# Session 09: Aggregate tree to forest type AGB
 
 **GOALS:**
 
-1.  Calculate the mean aboveground biomass for all forest types using plot level land cover and systematic sampling.
-2.  Calculate the mean aboveground biomass for all forest types using ratio estimators and 2-stages sampling for post-stratification.
-3.  Compare estimates
+1.  Calculate the mean aboveground biomass for all forest types using **plot level** land cover and **systematic sampling**.
+2.  Calculate the mean aboveground biomass for all forest types using **ratio estimators** and **2-stages sampling for post-stratification**.
+3.  Compare estimates.
 
 <!-- Section 9.1 -->
 
@@ -63,6 +64,139 @@ source(here("R/SOL-07b-tree-basal-area.R"))
 4.  Create Forest type AGB as the mean of plot AGB per forest type.
 
 5.  Calculate sampling error.
+
+### Sum tree AGB to subplot
+
+We will use `group_by()` and `summarise()` to bring tree characteristics to the subplot level.
+
+```{r}
+#| label: sp-agb
+
+subplot_agb <- tree |>
+  group_by(plot_no, subplot_no) |>
+  summarise(
+    sp_agb = sum(tree_agb_final * tree_weight_spha / 1000),
+    sp_ba  = sum(tree_ba * tree_weight_spha),
+    sp_dens = sum(tree_weight_spha),
+    tree_meas = n()
+  )
+```
+
+### Load plot level main land cover
+
+Plot level land cover was generated, from the subplots center LC, with the following rules:
+
+1.  For plots with one unique LC, they were directly assigned to plot level.
+2.  For plots with multiple land cover, we used the majority LC for the whole plot.
+3.  If some plots have equal importance of two land covers, we used to minimum land cover class.
+
+```{r}
+#| label: load-plotlc
+
+plot_lc <- read_csv("data/training_plot_lc.csv", show_col_types = FALSE)
+
+```
+
+### Aggregate subplot to plot
+
+We take the mean of subplot variables (except tree measured count).
+
+```{r}
+#| label: plot-agb
+
+plot_agb <- subplot_agb |>
+  group_by(plot_no) |>
+  summarise(
+    plot_agb = mean(sp_agb),
+    plot_ba = mean(sp_ba),
+    plot_dens = mean(sp_dens),
+    plot_tree_meas = sum(tree_meas)
+  ) |>
+  left_join(plot_lc, by = join_by(plot_no))
+
+```
+
+Let's look at plot AGB per land cover in @exr-91.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 9.1 -->
+
+::: {#exr-91}
+## \~ Boxplot of plot AGB
+
+\linebreak
+
+Instructions:
+
+-   Make a boxplot of plot AGB against land cover classes
+:::
+::::
+
+Type here the answers to @exr-91:
+
+```{r}
+#| label: ex-91-code
+
+## Your code here
+plot_agb |>
+  ggplot(aes(x = plot_lc, y = plot_agb)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.1, size = 0.8)
+```
+
+### Aggregate to forest type AGB
+
+Now we can take averages of plot AGB for each forest type. For the uncertainty, we also need **standard deviation** of AGB and the **number of plots**.
+
+```{r}
+#| label: ftype-agb
+
+ftype_agb <- plot_agb |>
+  group_by(plot_lc) |>
+  summarise(
+    plot_count = n(),
+    total_tree_meas = sum(plot_tree_meas),
+    ftype_dens = mean(plot_dens),
+    ftype_ba = mean(plot_ba),
+    ftype_agb = mean(plot_agb),
+    ftype_agb_sd = sd(plot_agb)
+  )
+
+```
+
+We can calculate the uncertainty for systematic design with this formula:
+
+$$
+U\% = t^{1 - \alpha/2}_{n-1} \times \frac{\sigma}{\sqrt{n}} \times \frac{1}{\mu} \times 100
+$$
+
+```{r}
+#| label: ftype-agbu
+
+ftype_agb <- ftype_agb |>
+  mutate(
+    ftype_agb_se = ftype_agb_sd / sqrt(plot_count),
+    ftype_agb_me = qt(0.975, plot_count - 1) * ftype_agb_se,
+    ftype_agb_U  = ftype_agb_me / ftype_agb * 100,
+    ftype_agb_cilower = ftype_agb - ftype_agb_me,
+    ftype_agb_ciupper = ftype_agb + ftype_agb_me
+  )
+
+```
+
+Make a plot of forest type AGB with sampling uncertainty
+
+```{r}
+#| label: ftype-agb-plot
+
+ftype_agb |>
+  ggplot(aes(x = plot_lc, y = ftype_agb)) +
+  geom_col(aes(fill = plot_lc), col = "black") +
+  geom_errorbar(aes(ymin = ftype_agb_cilower, ymax = ftype_agb_ciupper)) +
+  theme(legend.position = "none") +
+  ylim(0, 600)
+
+```
 
 <!-- Section 9.2 -->
 
