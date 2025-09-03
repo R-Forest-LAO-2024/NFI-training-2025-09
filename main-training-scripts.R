@@ -17,6 +17,6 @@ source(here("R/SOL-07b-tree-basal-area.R"))
 
 source(here("R/SOL-08a-tree-agb.R"))
 
-source(here("R/SOL-08b-tree-bgb.R"))
+#source(here("R/SOL-08b-tree-bgb.R"))
 
-source(here("R/SOL-08c-tree-carbon.R"))
+#source(here("R/SOL-08c-tree-carbon.R"))
