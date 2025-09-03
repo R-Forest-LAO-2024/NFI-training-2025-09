@@ -1,0 +1,261 @@
+---
+title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
+subtitle: "Session 08: tree aboveground biomass"
+date: "01-05 Sep 2025"
+number-sections: true
+toc: true
+toc-depth: 2
+highlight-style: github
+theme: 
+  light: flatly
+  dark: darkly
+format: 
+  html: 
+    toc-location: left
+    embed-resources: true
+  docx:
+    reference-doc: custom-reference-doc.docx
+  pdf: 
+    documentclass: scrartcl
+    papersize: A4
+    colorlinks: true
+editor: visual
+---
+
+# Setup {.unnumbered}
+
+```{r}
+#| label: setup
+#| output: false
+ 
+## Useful when sourcing script from Quarto doc.
+if (!require(here)) install.packages("here"); library(here)
+
+source(here("R/00-load-packages.R"))
+source(here("R/SOL-05-data-preparation.R"))
+source(here("R/SOL-06-data-joins.R"))
+source(here("R/SOL-07a-tree-weight.R"))
+source(here("R/SOL-07b-tree-basal-area.R"))
+```
+
+# Session 08: tree aboveground biomass
+
+**GOALS:**
+
+1.  add AGB at tree level for each forest type
+
+2.  Add AGB from chave 05 and 14 without height
+
+3.  Make a figure for natural forest and one for plantations, showing forest type AGB, and chave models
+
+<!-- Section 8.1 -->
+
+## List of models
+
+-   `"EG" ~ 0.3112 * tree_dbh^2.2331,`
+
+-   `"MD" ~ 0.523081 * tree_dbh^2,`
+
+-   `"DD" ~ 0.2137 * tree_dbh^2.2575,`
+
+-   `"CF" ~ 0.1277 * tree_dbh^2.3944,`
+
+-   `"MCB" ~ 0.1277 * tree_dbh^2.3944,`
+
+-   `"P_AC" ~ 0.1173 * tree_dbh^2.454,`
+
+-   `"P_EC" ~ 0.199 * tree_dbh^2.185,`
+
+-   `"P_RB" ~ 0.0082 * (pi*tree_dbh)^2.5623, ## Rubber model uses circumference`
+
+-   `"P_TK" ~ 0.077 * tree_dbh^2.546,`
+
+-   `"P_OTH" ~ 0.3112 * tree_dbh^2.2331,`
+
+-   `"RV" ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),`
+
+-   `"B" ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),`
+
+-   `Chave14 = round(exp(-1.803 - 0.976plot_E + 0.976log(0.6) + 2.673log(tree_dbh) -0.0299(log(tree_dbh))^2)`
+
+-   `Chave05 = round(0.6 * exp(-1.499 + 2.148log(tree_dbh) + 0.207(log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3)`
+
+<!-- Section 8.2 -->
+
+## AGB per forest type
+
+We can assign different AGB models to trees for different forest types with `mutate()` and `case_when()`:
+
+```{r}
+#| label: agb-demo
+
+#table(tree$lc_code)
+
+tree <- tree |> 
+  mutate( 
+    tree_agb_final = case_when(
+      lc_code == "EG" ~ 0.3112 * tree_dbh^2.2331, 
+      ## ADD OTHER equations here 
+      TRUE ~ 0
+    ) 
+  )
+```
+
+Let's fill in the other cases in the @exr-81.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 8.1 -->
+
+::: {#exr-81}
+## \~ Complete tree_agb_final
+
+\linebreak
+
+-   For all forest land covers add their equations as shown at the beginning of the document.
+
+-   For land cover with no equation, assign 0 with `TRUE ~ 0`.
+
+-   Make a figure with 'tree_agb_final' against 'tree_dbh' as points (optional)
+
+-   Make a figure with 'tree_agb_final' against 'tree_dbh' as line with color based on 'lc_code' (optional)
+:::
+::::
+
+Type here answers to @exr-81:
+
+```{r}
+#| label: ex-81-code
+
+## Your code here
+
+##!!! SOL
+tree <- tree |>
+  mutate(
+    tree_agb_final = case_when(
+      lc_code == "EG"    ~ 0.3112 * tree_dbh^2.2331,
+      lc_code == "MD"    ~ 0.523081 * tree_dbh^2,
+      lc_code == "DD"    ~ 0.2137 * tree_dbh^2.2575,
+      lc_code == "CF"    ~ 0.1277 * tree_dbh^2.3944,
+      lc_code == "MCB"   ~ 0.1277 * tree_dbh^2.3944,
+      lc_code == "P_AC"  ~ 0.1173 * tree_dbh^2.454,
+      lc_code == "P_EC"  ~ 0.199 * tree_dbh^2.185,
+      lc_code == "P_RB"  ~ 0.0082 * (pi*tree_dbh)^2.5623, ## Rubber model uses circumference
+      lc_code == "P_TK"  ~ 0.077 * tree_dbh^2.546,
+      lc_code == "P_OTH" ~ 0.3112 * tree_dbh^2.2331,
+      lc_code == "RV"    ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),
+      lc_code == "B"     ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),
+      TRUE ~ 0
+    )
+  )
+
+tree |> ggplot(aes(x = tree_dbh, y = tree_agb_final)) + geom_point()
+tree |> ggplot(aes(x = tree_dbh, y = tree_agb_final)) + geom_line(aes(color = lc_code)) ## !!!
+```
+
+<!-- Section 8.3 -->
+
+## AGB from Chave 2005 and 2014
+
+Let's add 3 models to all trees, regardless of their forest type to compare with the forest type based models, in @exr-82.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 8.2 -->
+
+::: {#exr-82}
+## \~ Add AGB allometric equations for all trees
+
+\linebreak
+
+Instructions:
+
+-   Add 'tree_agb_chave05' with Chave et al. 2005 equation
+
+-   Add 'tree_agb_chave14' with Chave et al. 2014 equation
+
+-   Add 'tree_agb_EG' with the evergreen forest model
+:::
+::::
+
+Type here answers to @exr-82:
+
+```{r}
+#| label: ex-82-code
+
+## Your code here
+
+## !!! SOL
+tree <- tree |> 
+  mutate(
+    tree_agb_chave05 = 0.6 * exp(-1.499 + 2.148*log(tree_dbh) + 0.207*(log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),
+    tree_agb_chave14 = exp(-1.803 - 0.976*plot_E + 0.976*log(0.6) + 2.673*log(tree_dbh) - 0.0299*(log(tree_dbh))^2),
+    tree_agb_EG = 0.3112 * tree_dbh^2.2331
+    )
+## !!!
+
+```
+
+<!-- Section 8.4 -->
+
+## Compare AGB models
+
+<!-- Section 8.4.1 -->
+
+### Natural forest
+
+Let's compare our forest type specific tree aboveground with the Chave's models and the model for Evergreen forests. Since there are many forest type let's look at natural forests first with `filter()`.
+
+```{r}
+#| label: agb-compa-natural
+
+tree |>
+  filter(tree_agb_final != 0, lc_no <= 20) |>
+  ggplot(aes(x = tree_dbh, y = tree_agb_final)) +
+  geom_point() +
+  geom_line(aes(y = tree_agb_chave05), color = "grey60") +
+  geom_line(aes(y = tree_agb_chave14), color = "darkred") +
+  geom_line(aes(y = tree_agb_EG), color = "darkgreen") +
+  facet_wrap(~lc_no)
+```
+
+We can observe in this figure that the forest type specific models are quite conservative, since our AGB final model predicts smaller AGB for the same DBH compared to both Chave's models.
+
+<!-- Section 8.4.2 -->
+
+### (optional) Planted forest
+
+Let's produce the same figure for planted forests in @exr-83.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 8.3 -->
+
+::: {#exr-83}
+## \~ Compare models for plantations
+
+\linebreak
+
+Instructions:
+
+-   Make a similar graph than 3.1 but for planted forest only
+:::
+::::
+
+Type here answers to the @exr-83:
+
+```{r}
+#| label: ex-83-code
+
+## Your code here
+
+## !!! SOL
+tree |>
+  filter(tree_agb_final != 0, lc_no >= 160) |>
+  ggplot(aes(x = tree_dbh, y = tree_agb_final)) +
+  geom_point() +
+  geom_line(aes(y = tree_agb_chave05), color = "grey60") +
+  geom_line(aes(y = tree_agb_chave14), color = "darkred") +
+  geom_line(aes(y = tree_agb_EG), color = "darkgreen") +
+  facet_wrap(~lc_code)
+## !!!
+```
+
+Plantation models selected for AGB final are also conservative in general, except for the rubber model.

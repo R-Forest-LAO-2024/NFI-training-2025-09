@@ -1,6 +1,6 @@
 ---
 title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
-subtitle: "Session 06: data joins"
+subtitle: "Session 07: Tree weight and basal area"
 date: "01-05 Sep 2025"
 number-sections: true
 toc: true
