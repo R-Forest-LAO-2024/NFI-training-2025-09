@@ -63,7 +63,8 @@ tmp_plot_solve2 <- tmp_plot_lc |>
 
 plot_lc <- tmp_plot_unique |>
   bind_rows(tmp_plot_ulc_final) |>
-  bind_rows(tmp_plot_solve2)
+  bind_rows(tmp_plot_solve2) |>
+  select(plot_no, plot_lc = subplot_lc_class_center, count_splc)
 
 length(unique(subplot$plot_no))
 
@@ -73,4 +74,4 @@ plot_lc |>
   summarise(count = n()) |>
   filter(count > 1)
 
-write_csv(plot_lc, "data/plot_lc.csv")
+write_csv(plot_lc, "data/training_plot_lc.csv")

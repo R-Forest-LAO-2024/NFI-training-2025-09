@@ -202,6 +202,8 @@ ftype_agb |>
 
 ## AGB with ratio estimator and 2-stages sampling for post-stratification
 
+Step-by-step:
+
 <!-- Section 9.3 -->
 
 ## Compare AGB estimates from the 2 aggregation methods
