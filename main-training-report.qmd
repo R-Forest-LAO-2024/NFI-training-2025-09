@@ -98,13 +98,11 @@ subplot_init <- read_csv("data/training_subplot.csv", show_col_types = FALSE)
 
 Load the tables 'training_tree.csv' and 'training_lcs.csv' in the @exr-51.
 
-:::: {.callout-tip appearance="simple"}
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 5.1 -->
 
 ::: {#exr-51}
-## Load 'training_tree.csv' and 'training_lcs.csv' tables
-
-\linebreak
+## \~ Load 'training_tree.csv' and 'training_lcs.csv' tables
 
 -   Load the table 'training_lcs.csv' in the R objects 'lcs_init'.
 -   Load the table 'training_tree.csv' in the R objects 'tree_init'.
@@ -169,13 +167,11 @@ tree_init |>
 
 Adapt the previous code to make a tree location map for the subplot '1A' and add different colors based on tree DBH size in @exr-52.
 
-:::: {.callout-tip appearance="simple"}
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 5.2 -->
 
 ::: {#exr-52}
-## Make a tree location figure
-
-\linebreak
+## \~ Make a tree location figure
 
 -   create the table `circ08` similar to `circ16` but for a 8m radius circle.
 
@@ -210,19 +206,19 @@ tree_init |>
 
 Visualizations can also be used to detect outliers. We use the example of small trees outside the nested subplot circle of 8m radius as guided exercise in @exr-53.
 
-:::: callout-tip
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 5.3 -->
 
 ::: {#exr-53}
-## (Optional) detect outliers on graph
+## \~ (Optional) detect outliers on graph
 
-\linebreak
+-   Make a figure with tree location of all trees smaller than or equal to 30 cm with the 2 circles of 8 and 16 meters.
 
-First, make a figure with tree location of all trees smaller than or equal to 30 cm with the 2 circles of 8 and 16 meters.
+<!-- -->
 
--   use filter() to get all trees with DBH \<= 30 cm.
+-   Use filter() to get all trees with DBH \<= 30 cm.
 
--   make the ggplot of tree locations
+-   Make the ggplot of tree locations
 
 ```{r}
 #| label: ex-03-1
@@ -303,21 +299,13 @@ Notice the results as 3 subplots have duplicate `subplot_id`.
 
 Now practice the same code sequence to check if there are duplicates in `plot_no` in the @exr-54. Note that each plot ID should appears 4 times in the subplot table, one for each subplot, so duplicates are when `count > 4`.
 
-:::: {.callout-tip appearance="simple"}
-<!-- EX-04 -->
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 5.4 -->
 
 ::: {#exr-54}
-## Identify duplicates of plot number
-
-\linebreak
+## \~ Identify duplicates of plot number
 
 -   Create `vec_dup2` similarly to `vec_dup`, but this time looking for plot_no that have more than 4 subplot IDs, so you will need to group by `plot_no` and filter `count > 4` and pull `plot_no`.
-
-```{r}
-
-
-
-```
 
 There should be no duplicates of `plot_no`.
 :::
@@ -386,13 +374,11 @@ You can now copy/paste the above R chunk and complete the correction for the 2 o
 
 Note: we correct `subplot_no` now, but we will need to remake `subplot_id` once `subplot_no` is correct.
 
-:::: {.callout-tip appearance="simple"}
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 5.5 -->
 
 ::: {#exr-55}
-## Correct duplicates in subplot IDs
-
-\linebreak
+## \~ Correct duplicates in subplot IDs
 
 -   for each remaining duplicate, run the table `tt` with all subplots for the plot with duplicates
 
@@ -458,13 +444,11 @@ There are no trees with DBH \< 10 cm or unrealistically big DBH, all good.
 
 We can check for outliers in tree distance and azimuth in @exr-56.
 
-:::: {.callout-tip appearance="simple"}
-<!-- EX-06 -->
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 5.6 -->
 
 ::: {#exr-56}
-## Check azimuth and distance
-
-\linebreak
+## \~ Check azimuth and distance
 
 -   Check that azimuth is between 0 and 360
 
@@ -583,16 +567,11 @@ tree <- tree |>
 
 We can now check if the code implementation worked with a visual check in @exr-61.
 
-:::: {.callout-warning appearance="simple"}
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 61 -->
 
-<div>
-
+::: {#exr-61}
 ## Figure of tree locations
-
-\linebreak
-
-Instructions:
 
 -   Filter the tree data for subplot '**123B**'.
 
@@ -607,8 +586,7 @@ Instructions:
 -   Add `coord_fixed()` to make sure the x and y axis have the same unit length.
 
 Check visually that the trees are positioned correctly based on their azimuth!
-
-</div>
+:::
 ::::
 
 Answer to @exr-61:
@@ -676,21 +654,15 @@ It is recommended to change object name when using join to avoid undesired suffi
 :::: {.callout-warning appearance="simple"}
 <!-- EX 6.2 -->
 
-<div>
-
+::: {#exr-62}
 ## Undesired suffixes
-
-\linebreak
-
-Instructions:
 
 -   Create `tree_err` by joining `tree` and `tmp_lcs`
 
 -   Re-create `tree_err` by joining `tree_err` and `tmp_lcs`
 
 -   Run `names(tree_err)`
-
-</div>
+:::
 ::::
 
 Answers to @exr-62:
@@ -741,10 +713,6 @@ Practice 'joins with controlled suffix' to join Chave E at plot level from `anci
 ::: {#exr-63}
 ## Join Chave E to the trees table
 
-\linebreak
-
-Instructions:
-
 -   Identify which column from `anci$plot_E` to pass to `tree` and which column is the key
 
 -   from `tree`, create a column with NAs that has the same name as the column from `anci$plot_E` that we want in `tree`
@@ -779,11 +747,7 @@ Now that we have land cover information at tree level we can make a figure of tr
 <!-- EX 6.4 -->
 
 ::: {#exr-64}
-## (optional) Figure of tree location with land cover
-
-\linebreak
-
-Instructions:
+## \~ (optional) Figure of tree location with land cover
 
 -   Remake the figure of EX-01 with these differences:
 

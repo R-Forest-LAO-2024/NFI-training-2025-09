@@ -5,7 +5,7 @@ results/
 *.html
 *.docx
 *.pdf
-
+!custom-reference-doc.docx
 # History files
 .Rhistory
 .Rapp.history
