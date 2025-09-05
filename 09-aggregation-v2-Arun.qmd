@@ -78,8 +78,7 @@ subplot_agb <- tree |>
     sp_agb = sum(tree_agb_final * tree_weight_spha / 1000),
     sp_ba  = sum(tree_ba * tree_weight_spha),
     sp_dens = sum(tree_weight_spha),
-    tree_meas = n(),
-    .groups = "drop"
+    tree_meas = n()
   )
 ```
 
@@ -251,13 +250,12 @@ test_ph2 <- expand_grid(
 We can check that this table is identical to `anci$ph2` with `all.equal()`:
 
 ```{r}
-tmp_ph2 <- anci$ph2 |> 
-  select(plot_id, subplot_no, lcs_no, subplot_id)
+tmp_ph2 <- anci$ph2 |> select(plot_id, subplot_no, lcs_no, subplot_id)
 
 all.equal(tmp_ph2, test_ph2)
 ```
 
-We then need to add **accessibility** from subplot and subpopulation and **strata** from phase 1 data with `left_join()` in @exr-92.
+We then need to add accessibility from subplot and subpopulation and strata from phase 1 data with `left_join()` in @exr-92.
 
 :::: {.callout-warning appearance="simple"}
 <!-- EX 9.2 -->
@@ -275,25 +273,23 @@ Instructions:
 
 -   Join these 2 tables to `ph2_subplot` with suffix control method.
 :::
-::::
 
 Type here answers to @exr-92:
+::::
 
 ```{r}
 #| label: ex-92-code
 
-## Your code here
-tmp_sp <- subplot |>
-  select(plot_id = plot_no, subplot_no, subplot_access)
+tmp_sp <- subplot |> select(plot_id = plot_no, subplot_no, subplot_access)
 
 tmp_ph1 <- anci$ph1 |>
+  filter(!is.na(plot_id)) |>
   select(plot_id, subpop, stratum, prov_no = ph1_prov_no, prov_name = ph1_prov_name)
-
 
 ph2_subplot <- ph2_subplot |>
   mutate(
     subplot_access = NA,
-    subpop = NA,
+    subpop = NA, 
     stratum = NA,
     prov_no = NA,
     prov_name = NA
@@ -301,24 +297,24 @@ ph2_subplot <- ph2_subplot |>
   left_join(tmp_ph1, by = join_by(plot_id), suffix = c("_rm", "")) |>
   left_join(tmp_sp, by = join_by(plot_id, subplot_no), suffix = c("_rm", "")) |>
   select(-ends_with("_rm"))
-
+## !!!
 ```
 
-In the final preparation phase 2 subplot table, correction for shifted plots was implemented beforehand.
+In the final preparation phase 2 subplot table, correction for shifted plots was implemented before end.
 
 #### **Re-coding accessibility**
 
-Accessibility plays an important role in the final estimates. Since not all the initial 1,067 plots were visited, there is missing information on **many non-forest plots** and **some forest plots**. To simplify the calculations, it was considered that:
+Accessibility plays an important role in the final estimates. Since not all the initial 1,067 plots were visited. There is missing information on many non-forest plots and some forest plots. To simplify the calculations, it was considered that all non-visited forest plots would be considered as non-accessible but all non-visited non-forest plots would be considered as accessible with biomass 0.
 
--   **all non-visited forest plots would be considered as non-accessible,**
+To simplify the calculations, it was considered that:
 
--   **all non-visited non-forest plots would be considered as accessible with biomass 0.**
+-   all non-visited forest plots would be considered as non-accessible.
+
+-   all non-visited non-forest plots would be considered as accessible with biomass 0.
 
 This is important to keep in mind in case biomass of trees outside forest becomes relevant for future NFI cycles.
 
----
-
-NOTE: The Phase 2 focused on forest and RV land cover, but some plots from Phase 1 and planned for phase 2 were non-forest in the Phase 1 interpretation and still visited.
+NOTE: The phase 2 focused on foresr and RV land cover, but some plots from phase phase 1 and planned for phase 2 were non-forest in the Phase 1 interpretation and still visited.
 
 ```{r}
 #| label: ph1-nonforest
@@ -334,12 +330,9 @@ tmp_ph2nf_visited <- subplot |>
   filter(plot_no %in% vec_ph2nf, subplot_no == "A") 
 
 write_csv(tmp_ph2nf_visited, "ph2_nonforest_visited.csv")
-
 ```
 
----
-
-Code for re-coding accessibility:
+Code for re-coding accessibility
 
 ```{r}
 #| label: sp-access
@@ -355,16 +348,11 @@ ph2_subplot <- ph2_subplot |>
       TRUE ~ NA
     )
   )
-
 ```
 
 #### Subplot largest area
 
-For aggregation with ratio estimator we need to keep track of the areas where trees are measured. Since we have a tree weight for small trees, we are only interested in the larger area:
-
--   12 m side square of a quarter
-
--   difference between the 16m radius circle and the 12m side square.
+For aggregation with ratio estimator we need to keep track of the areas where trees are measured. Since we have a tree weight for small trees, we are only interested in the larger area: 12 m side square of a quarter of the difference between the 16m radius circle and the 12m side square.
 
 ```{r}
 #| label: sp-area
@@ -384,7 +372,7 @@ We can now aggregate trees to the subplot x LCS level and join with the phase 2 
 #| label: agg-tree
 
 ph2_sp_tree <- tree |>
-  select(plot_id = plot_no, subplot_no, lcs_no, tree_weight, tree_ba, tree_agb_final) |>
+  select(plot_id = plot_no, subplot_no, lcs_no, tree_no, tree_stem_no, tree_dbh, tree_weight, tree_ba, tree_agb_final) |>
   mutate(
     subplot_id = paste0(subplot_no, lcs_no)
   ) |>
@@ -437,7 +425,6 @@ res3_dens <- nfi_aggregate3(
   .aoi_area = 23680000
     )
 
-res3_dens_tot <- res3_dens$totals_short
 ```
 
 The function output is a list with different levels of data aggregation.
@@ -454,11 +441,11 @@ Practice now the function `nfi-aggregate3()` to get basal area and aboveground b
 
 Instructions:
 
--   (optional) Create `res3_ba` as the output of the aggregation function with basal area as `.attr_y` .
+-   Create `res3_ba` as the output of the aggregation function with basal area as `.attr_y` .
 
--   Create `res3_agb` as the output of the aggregation function with aboveground biomass as `.attr_y` .
+-   Create `res3_agb` as the output of the aggregation function with basal area as `.attr_y` .
 
--   Save the totals_short output from res3_agb to a new object `res3_agb_tot`.
+-   Save the totals_short output from res3_agb to a new object res3_agb_tot.
 
 -   Make a barplot with AGB per ha against land cover with their error bars, for natural forest only.
 :::
@@ -469,30 +456,36 @@ Type here answers to @exr-93:
 ```{r}
 #| label: ex-93-code
 
-## Your code here
-ph2_data <- ph2_subplot |> mutate(subpop = 1)
-
-res3_agb <- nfi_aggregate3(
+res3_ba <- nfi_aggregate3(
   .ph1_df = anci$ph1, 
   .ph2_sp = ph2_data, 
   .class_d = lc_no, 
-  .attr_y = agb, 
+  .attr_y = ba, 
+  .attr_x = sp_area, 
+  .aoi_area = 23680000
+  )
+
+res3_agb <- nfi_aggregate3(
+  .ph1_df = anci$ph1, 
+  .ph2_sp = ph2_data,
+  .class_d = lc_no,
+  .attr_y = agb,
   .attr_x = sp_area, 
   .aoi_area = 23680000
     )
-
 res3_agb_tot <- res3_agb$totals_short
 
 res3_agb_tot |>
-  filter(lc_no < 20) |>
+  filter(lc_no <= 19) |>
   ggplot(aes(x = lc_no, y = Rd)) +
-  geom_col(aes(fill = lc_no), col = "grey80") +
+  geom_col(aes(fill = lc_no), col = "darkgrey") +
   theme(legend.position = "none") +
   geom_errorbar(aes(ymin = Rd - Rd*Rd_mep/100, ymax = Rd + Rd*Rd_mep/100)) +
   labs(
     x = "Land cover code",
-    y = "AGB (ton (DM)/ha)"
+    y = "AGB (ton dm/ha)"
   )
+#
 ```
 
 Let's show the totals for AGB:
@@ -505,16 +498,13 @@ tab_agb <- res3_agb$totals_d |>
 
 kbl(
   tab_agb,
-  col.names = c("Land cover", "prop.", "U (perc)", "tot.", "prop.", "U (perc)", "ton (DM)/ha", "U (perc)", "tot." ),
+  col.names = c("Land cover", "prop.", "U (perc)", "tot.", "prop.", "U (perc)", "ton (DM)/ha", "U (perc.)", "tot."),
   format.args = list(big.mark = ",", digits = 2),
   booktabs = F
-  ) |>
-  #kable_styling(bootstrap_options = "basic") |>
-  add_header_above(c(" " = 1, "Area" = 3, "AGB" = 5), border_left = T, border_right = T) |>
-  column_spec(1:9, border_left = T, border_right = T)
-
-
-
+  |>
+  add_header_above(c(" " = 1, "Area" = 3, "AGB" = 5)) |>
+    column_spec(1:9, border_left = T, border_right = T),
+)
 ```
 
 <!-- Section 9.3 -->
@@ -544,9 +534,9 @@ agb_compa <- tmp_agb1 |>
 
 agb_compa |>
   ggplot(aes(x = as.character(lc_no), y = agb)) +
-  geom_col(aes(fill = method), col = "grey30", position = position_dodge()) +
+  geom_col(aes(fill = method), col = "grey80", position = position_dodge()) +
   geom_errorbar(aes(group = method, ymin = agb - agb*agb_U/100, ymax = agb + agb*agb_U/100), position = position_dodge()) +
-  ylim(0, 600)
+ylim(0,600)
 ```
 
-The ratio estimator method had big impact on EG and RV. Also big influence on uncertainty of CF.
+The ratio estimator had big impact on EG and RV. Also big influence on uncertainty of Coniferous (CF)

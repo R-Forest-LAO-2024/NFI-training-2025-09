@@ -6,6 +6,7 @@ results/
 *.docx
 *.pdf
 !custom-reference-doc.docx
+*.csv
 # History files
 .Rhistory
 .Rapp.history
