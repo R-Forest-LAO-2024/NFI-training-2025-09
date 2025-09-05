@@ -125,8 +125,6 @@ Let's look at plot AGB per land cover in @exr-91.
 ::: {#exr-91}
 ## \~ Boxplot of plot AGB
 
-\linebreak
-
 Instructions:
 
 -   Make a boxplot of plot AGB against land cover classes
@@ -264,8 +262,6 @@ We then need to add **accessibility** from subplot and subpopulation and **strat
 
 ::: {#exr-92}
 ## \~ (optional) Join core info to phase 2 table
-
-\linebreak
 
 Instructions:
 
@@ -450,8 +446,6 @@ Practice now the function `nfi-aggregate3()` to get basal area and aboveground b
 ::: {#exr-93}
 ## \~ Aggregate basal area and AGB
 
-\linebreak
-
 Instructions:
 
 -   (optional) Create `res3_ba` as the output of the aggregation function with basal area as `.attr_y` .
@@ -507,7 +501,7 @@ kbl(
   tab_agb,
   col.names = c("Land cover", "prop.", "U (perc)", "tot.", "prop.", "U (perc)", "ton (DM)/ha", "U (perc)", "tot." ),
   format.args = list(big.mark = ",", digits = 2),
-  booktabs = F
+  booktabs = F,align = 
   ) |>
   #kable_styling(bootstrap_options = "basic") |>
   add_header_above(c(" " = 1, "Area" = 3, "AGB" = 5), border_left = T, border_right = T) |>
@@ -521,7 +515,7 @@ kbl(
 
 ## Compare AGB estimates from the 2 aggregation methods
 
-Check agb from 2 methods
+Check AGB from 2 methods
 
 ```{r}
 #| label: agb-compa
@@ -539,8 +533,7 @@ tmp_agb2 <- res3_agb$totals_short |>
   mutate(method = "ratio estimator") |>
   select(method, lc_no, agb = Rd, agb_U = Rd_mep)
 
-agb_compa <- tmp_agb1 |>
-  bind_rows(tmp_agb2)
+agb_compa <- tmp_agb1 |> bind_rows(tmp_agb2)
 
 agb_compa |>
   ggplot(aes(x = as.character(lc_no), y = agb)) +

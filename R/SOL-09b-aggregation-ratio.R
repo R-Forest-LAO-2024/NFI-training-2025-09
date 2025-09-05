@@ -38,7 +38,6 @@ tmp_ph1 <- anci$ph1 |>
   filter(!is.na(plot_id)) |>
   select(plot_id, subpop, stratum, prov_no = ph1_prov_no, prov_name = ph1_prov_name)
 
-
 ph2_subplot <- ph2_subplot |>
   mutate(
     subplot_access = NA,
@@ -50,3 +49,22 @@ ph2_subplot <- ph2_subplot |>
   left_join(tmp_ph1, by = join_by(plot_id), suffix = c("_rm", "")) |>
   left_join(tmp_sp, by = join_by(plot_id, subplot_no), suffix = c("_rm", "")) |>
   select(-ends_with("_rm"))
+
+## Recode access and add area
+ph2_subplot <- ph2_subplot |>
+  mutate(
+    access = case_when(
+      plot_id <= 636 & subplot_access == "accessible" ~ TRUE,
+      plot_id <= 636 & subplot_access != "accessible" ~ FALSE,
+      plot_id <= 636 & is.na(subplot_access) ~ FALSE,
+      stratum %in% 1:3 ~ FALSE,
+      stratum == 4 ~ TRUE,
+      TRUE ~ NA
+    ),
+    sp_area = if_else(lcs_no == 1, 12^2, (pi*16^2 - 12^2)/4) / 10000
+  )
+
+
+## Add trees
+
+
