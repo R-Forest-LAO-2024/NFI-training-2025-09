@@ -21,6 +21,10 @@ use_package(sf)
 use_package(terra)
 use_package(writexl)
 use_package(kableExtra)
+use_package(ggforce)
+use_package(tinytex)
+if (!tinytex::is_tinytex()) tinytex::install_tinytex()
+
 
 ## Default theme for ggplot
 theme_set(theme_bw())

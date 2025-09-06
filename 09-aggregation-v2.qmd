@@ -312,7 +312,7 @@ Accessibility plays an important role in the final estimates. Since not all the 
 
 This is important to keep in mind in case biomass of trees outside forest becomes relevant for future NFI cycles.
 
----
+------------------------------------------------------------------------
 
 NOTE: The Phase 2 focused on forest and RV land cover, but some plots from Phase 1 and planned for phase 2 were non-forest in the Phase 1 interpretation and still visited.
 
@@ -333,7 +333,7 @@ write_csv(tmp_ph2nf_visited, "ph2_nonforest_visited.csv")
 
 ```
 
----
+------------------------------------------------------------------------
 
 Code for re-coding accessibility:
 

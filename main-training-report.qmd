@@ -5,7 +5,7 @@ date: "01-05 Sep 2025"
 number-sections: true
 toc: true
 toc-depth: 2
-highlight-style: github
+#highlight-style: github
 theme: 
   light: flatly
   dark: darkly
@@ -52,25 +52,41 @@ source(here("R/00-load-packages.R"))
 
 TBD
 
+<!-- MAIN SECTION BREAK -->
+
 {{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
 
 # Session 02: Updated calculation chain for the NFI cycle 4 carbon analysis
 
 TBD
 
+<!-- MAIN SECTION BREAK -->
+
 {{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
 
 # Session 03: Discussion and remarks on the updated calculations
 
 TBD
 
+<!-- MAIN SECTION BREAK -->
+
 {{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
 
 # Session 04: Refresher on R for forest data analysis
 
 TBD
 
+<!-- MAIN SECTION BREAK -->
+
 {{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
 
 # Session 05: data preparation
 
@@ -114,8 +130,8 @@ Answer to @exr-51:
 ```{r}
 #| label: ex-51-code
 
+## !!! Solution
 lcs_init <- read_csv("data/training_lcs.csv", show_col_types = FALSE)
-
 tree_init <- read_csv("data/training_tree.csv", show_col_types = FALSE)
 ```
 
@@ -129,7 +145,6 @@ In the training we use plot level environment factor (E) from Chave et al. 2014 
 
 ```{r}
 anci <- list()
-
 anci$ph1    <- read_csv("data/training_anci_phase1.csv", show_col_types = FALSE)
 anci$plot_E <- read_csv("data/training_anci_plotE.csv", show_col_types = FALSE)
 ```
@@ -180,6 +195,8 @@ Adapt the previous code to make a tree location map for the subplot '1A' and add
 -   Use `mutate()` and `if_else()` to add a column `tree_dbh_cat` that has value "small" for trees with DBH \< 30 cm and "big" for the other trees.
 
 -   Make the figure of tree location with the 8m and 16m radius circles and change the color of trees based on `tree_dbh_cat`.
+
+-   Use `labs()` to create clean labels in English or Lao.
 :::
 ::::
 
@@ -188,6 +205,7 @@ Answer to @exr-52:
 ```{r}
 #| label: ex-52-code
 
+## !!! Solution
 circ08 <- tibble(
   theta = seq(0, 2*pi, length = 100),
   x = 8 * cos(theta),
@@ -195,13 +213,14 @@ circ08 <- tibble(
 )
 
 tree_init |> 
-  # filter(plot_no == 1, subplot_no == "A") |>
+  filter(plot_no == 1, subplot_no == "A") |>
   mutate(tree_dbh_cat = if_else(tree_dbh < 30, "small", "big")) |>
   ggplot(aes(x = tree_x, y = tree_y)) +
   geom_point(aes(color = tree_dbh_cat)) +
   geom_path(data = circ08, aes(x = x, y = y)) +
   geom_path(data = circ16, aes(x = x, y = y)) +
-  coord_fixed()
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)", color = "DBH cat.")
 ```
 
 Visualizations can also be used to detect outliers. We use the example of small trees outside the nested subplot circle of 8m radius as guided exercise in @exr-53.
@@ -210,7 +229,9 @@ Visualizations can also be used to detect outliers. We use the example of small 
 <!-- EX 5.3 -->
 
 ::: {#exr-53}
-## \~ (Optional) detect outliers on graph
+## \~ (Optional) detect outliers on graph  
+
+**Part 1: Find outliers**
 
 -   Make a figure with tree location of all trees smaller than or equal to 30 cm with the 2 circles of 8 and 16 meters.
 
@@ -220,47 +241,77 @@ Visualizations can also be used to detect outliers. We use the example of small 
 
 -   Make the ggplot of tree locations
 
-```{r}
-#| label: ex-03-1
+**Part 2: highlight outliers**
 
-## Type here the answer to exercise 3 part 1
-
-
-```
-
-We can highlight outliers by making a specific table for them, they are trees with `tree_distance` \> 8m and `tree_dbh` \<= 30 cm. We can plot that table with big size point and a shape with no fill (see shape 21 to 24 in `help(pch)`.
-
-Make a new figure with:
+We can highlight outliers by making a specific table for them.
 
 -   Create the table `outliers` containing trees with DBH \<= 30 and distance \> 8. Use `filter()`.
 
 -   Make the same figure as before and add a `geom_point()` with `data = outliers`, `shape = 23` and `size = 4` .
 
-```{r}
-#| label: ex-03-2
-
-## Type here the answer to exercise 3 part 2
-
-
-```
-:::
-
 TIP: here we added `alpha = 0.2` to the geometry of the trees. It make tree point semi-transparent and helps to detect potential measurement issues if we would detect patches with few trees.
+
+**Part 3: explanations**
 
 Now are these outliers measurement errors?
 
 -   Make the same graph as this exercise's part 1, but this time with tree DBH \< 30 and [**not**]{.underline} DBH \<= 30.
+:::
+::::
+
+Type here answers to @exr-53 part1:
 
 ```{r}
-#| label: ex-03-3
+#| label: ex-53-1
 
-## Type here the answer to exercise 3 part 3
+## !!! Solution
+tree_init |> 
+  filter(tree_dbh <= 30) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(col = "darkred") +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)")
+```
 
+Type here answers to @exr-53 part2:
+
+```{r}
+#| label: ex-53-2
+
+## !!! Solution
+outliers <- tree_init |> filter(tree_dbh <= 30, tree_distance > 8)
+
+tree_init |> 
+  filter(tree_dbh <= 30) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(alpha = 0.2) +
+  geom_point(data = outliers, col = "red", shape = 23, size = 4) +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)")
+```
+
+Type here answers to @exr-53 part3:
+
+```{r}
+#| label: ex-53-3
+
+## !!! Solution
+tree_init |> 
+  filter(tree_dbh < 30) |>
+  ggplot(aes(x = tree_x, y = tree_y)) +
+  geom_point(col = "darkred") +
+  geom_path(data = circ08, aes(x = x, y = y)) +
+  geom_path(data = circ16, aes(x = x, y = y)) +
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)")
 
 ```
 
-Conclusion: the trees found outside the small circle were trees with DBH = 30 cm. They were not measurement errors, they were part of the big trees and therefore could be found outside the 8m radius circle.
-::::
+Conclusion of @exr-53: the trees found outside the small circle were trees with DBH = 30 cm. They were not measurement errors, they were part of the big trees and therefore could be found outside the 8m radius circle.
 
 <!-- Section 5.2 -->
 
@@ -268,7 +319,7 @@ Conclusion: the trees found outside the small circle were trees with DBH = 30 cm
 
 One of the main issue found in the raw data was the entry errors of subplot and tree IDs. It is very important in Database Management Systems (DBMS) to have unique IDs for all tables. In NFI it is particularly important for joining information from one table to the other. For example, land cover information is recorded at subplot level and needs to be passed on to tree level to apply the correct allometric equations. These errors can be detected programatically but often have to be solved manually.
 
-This section introduces how to use `group_by()` and `summarise()` to find duplicates in subplot IDs
+This section introduces how to use `group_by()` and `summarise()` to find duplicates in subplot IDs.
 
 <!-- section 5.2.1 -->
 
@@ -316,6 +367,7 @@ Answer to @exr-54:
 ```{r}
 #| label: ex-54-code
 
+## !!! Solution
 vec_dup2 <- subplot_init |>
   group_by(plot_no) |>
   summarise(count = n(), .groups = "drop") |>
@@ -330,36 +382,22 @@ There should be no duplicates of `plot_no`.
 
 ### Correct the subplot ID issues
 
-To correct the duplicates in subplot_id, we filter the subplots from one of the duplicated IDs and visually check what is wrong. In case one ID is missing and one is duplicated we use timestamps to identify which of the duplicates should be renamed.
+To correct the duplicates in subplot_id, we filter the subplots from one of the duplicated IDs and visually check what is wrong. In case one ID is missing and one is duplicated we can use time stamps to identify which of the duplicates should be renamed.
 
 Then we can use `mutate()` and `case_when()` to apply correction in R.
 
 Step-by-step:
 
 -   Filter the subplots of one plot with duplicates: 631C.
+-   Visualize the table (run `View(tt)` or click `tt` in the Environment tab (top-right window in Rstudio).
+    -   In the case of '631C' there are 2 subplots C but no B. we can use time stamps to identify that `ONA_index` 109 should actually be for subplot B.
+-   Perform the correction using `case_when()` function for subplot_id 631C. At this stage only `ONA_index` is unique so it can be used to correctly identify the subplot to correct.
 
 ```{r}
 tt <- subplot_init |> filter(plot_no == 631)
 
-subplot <- subplot_init |>
-  mutate(
-    subplot_no = case_when(
-      subplot_id == "631C" & ONA_index == 109 ~ "B",
-      ## ADD more corrections,
-      TRUE ~ subplot_no
-    )
-  )
+# View(tt)
 
-
-```
-
--   Visualize the table (run `View(tt)` or click `tt` in the Environment tab (top-right window in Rstudio).
-
-    -   In the case of '631C' there are 2 subplots C but no B. we can use time stamps to identify that `ONA_index` 109 should actually be for subplot B.
-
--   Perform the correction using case_when() function for subplot_id 631C. At this stage only ONA_index is unique so it can be used to correctly identify the subplot to correct.
-
-```{r}
 subplot <- subplot_init |>
   mutate(
     subplot_no = case_when(
@@ -393,6 +431,7 @@ Solution to @exr-55:
 ```{r}
 #| label: ex-55-code
 
+## !!! Solution
 subplot <- subplot_init |>
   mutate(
     subplot_no = case_when(
@@ -450,11 +489,9 @@ We can check for outliers in tree distance and azimuth in @exr-56.
 ::: {#exr-56}
 ## \~ Check azimuth and distance
 
--   Check that azimuth is between 0 and 360
+-   Check that azimuth is between 0 and 360.
 
--   Check that distance is between 0 and 16
-
-No error found in distance or azimuth.
+-   Check that distance is between 0 and 16.
 :::
 ::::
 
@@ -503,7 +540,11 @@ rm(tmp)
 
 ```
 
+<!-- MAIN SECTION BREAK -->
+
 {{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
 
 # Session 06: data joins
 
@@ -571,7 +612,7 @@ We can now check if the code implementation worked with a visual check in @exr-6
 <!-- EX 61 -->
 
 ::: {#exr-61}
-## Figure of tree locations
+## \~ Figure of tree locations
 
 -   Filter the tree data for subplot '**123B**'.
 
@@ -594,6 +635,7 @@ Answer to @exr-61:
 ```{r}
 #| label: ex-61-code
 
+## !!! Solution
 tree |>
   filter(plot_no == 123, subplot_no == "B") |>
   ggplot(aes(x = tree_x, y = tree_y)) +
@@ -601,10 +643,13 @@ tree |>
   geom_path(data = circ16, aes(x = x, y = y)) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
-  geom_label_repel(aes(label = tree_azimuth), min.segment.length = 0) +
-  coord_fixed()
+  geom_text_repel(aes(label = tree_azimuth), min.segment.length = 0) +
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)", color = "LCS")
 
 ```
+
+We can observe that azimuths have been well converted to $(x, y)$ since azimuth labels are in their correct quadrants (0-90, 90-180, 180-270 ad 270-360 degree respectively).
 
 <!-- Section 6.2-->
 
@@ -651,11 +696,11 @@ tree_join <- tree |>
 
 It is recommended to change object name when using join to avoid undesired suffixes. Undesired suffixes happen when we join the same tables twice or more by mistake. The second time we join two tables, since the new tables are already in the joined table, they will be passed again but this time with suffixes `.x` and `.y`. Observe undesired suffix in the @exr-62.
 
-:::: {.callout-warning appearance="simple"}
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 6.2 -->
 
 ::: {#exr-62}
-## Undesired suffixes
+## \~ Undesired suffixes
 
 -   Create `tree_err` by joining `tree` and `tmp_lcs`
 
@@ -670,6 +715,7 @@ Answers to @exr-62:
 ```{r}
 #| label: ex-62-code
 
+## !!! Solution
 tree_err <- tree |> 
   left_join(tmp_lcs, by = join_by(plot_no, subplot_no, lcs_no))
 tree_err <- tree_err |> 
@@ -707,11 +753,11 @@ tree <- tree |>
 
 Practice 'joins with controlled suffix' to join Chave E at plot level from `anci$plot_E` with the @exr-63.
 
-:::: {.callout-warning appearance="simple"}
+:::: {.callout-warning appearance="simple" icon="false"}
 <!-- EX 6.3 -->
 
 ::: {#exr-63}
-## Join Chave E to the trees table
+## \~ Join Chave E to the trees table
 
 -   Identify which column from `anci$plot_E` to pass to `tree` and which column is the key
 
@@ -749,7 +795,7 @@ Now that we have land cover information at tree level we can make a figure of tr
 ::: {#exr-64}
 ## \~ (optional) Figure of tree location with land cover
 
--   Remake the figure of EX-01 with these differences:
+-   Remake the figure of @exr-61 with these differences:
 
 -   Change the color of trees based on lc_code
 
@@ -770,6 +816,7 @@ Type here answers to @exr-64:
 ```{r}
 #| label: ex-64-code
 
+## !!! Solution
 tree |> 
   filter(plot_no == 123, subplot_no == "B") |> 
   ggplot(aes(x = tree_x, y = tree_y)) + 
@@ -777,8 +824,11 @@ tree |>
   geom_path(data = circ16, aes(x = x, y = y)) + 
   geom_abline(intercept = 0, slope = 1) +
   geom_abline(intercept = 0, slope = -1) + 
-  coord_fixed()
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)", color = "land cover")
 ```
+
+Subplot '123B' is split between two land covers, Mixed deciduous (MD) in the land cover sections (LCS) 1, 2 and 5, and agriculture in LCS 3 and 4.
 
 <!-- Section 6.2.3 -->
 
@@ -799,8 +849,200 @@ tree |>
   geom_abline(intercept = 0, slope = 1) +
   geom_abline(intercept = 0, slope = -1) + 
   geom_path(data= center_sq, aes(x = x, y = y)) +
-  coord_fixed()
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)", color = "LCS")
 
 ```
 
+### Bonus: Tree DBH true to size on figures with the `ggforce` package.
+
+Graphs with `ggplot()` don't natively intend to represent points true to size with `geom_point()`, as size aesthetic is optimized for visibility. Here we represent the same figure as above but with point size change based on tree DBH
+
+```{r}
+#| label: full-graph-dbh
+
+tree |> 
+  filter(plot_no == 123, subplot_no == "B") |> 
+  ggplot(aes(x = tree_x, y = tree_y)) + 
+  geom_point(aes(color = lc_code, size = tree_dbh)) + 
+  geom_path(data = circ16, aes(x = x, y = y)) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_abline(intercept = 0, slope = -1) + 
+  geom_path(data= center_sq, aes(x = x, y = y)) +
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)", color = "LCS", size = "DBH (cm)")
+```
+
+Now if we want to see trees' DBH true to size, with the plot area, we can use `geom_circle()` from the package `ggforce`.
+
+```{r}
+#| label: full-graph-dbh-size
+
+tree |> 
+  filter(plot_no == 123, subplot_no == "B") |> 
+  ggplot(aes(x = tree_x, y = tree_y)) + 
+  geom_point(aes(fill = lc_code), shape = 21, size = 3, stroke = 0) + 
+  geom_circle(aes(x0 = tree_x, y0 = tree_y, r = tree_dbh/200, fill = lc_code)) + 
+  geom_path(data = circ16, aes(x = x, y = y)) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_abline(intercept = 0, slope = -1) + 
+  geom_path(data= center_sq, aes(x = x, y = y)) +
+  coord_fixed() +
+  labs(x = "X (m)", y = "Y (m)", fill = "LC code", size = "DBH (cm)")
+```
+
+Here we kept the points as the trees are small and wouldn't be visible otherwise.
+
+<!-- MAIN SECTION BREAK -->
+
 {{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
+# Session 07: tree weights and basal area
+
+**Goals**
+
+1.  Calculate tree weights for ratio estimators and for subplot per ha values
+
+2.  Calculate tree basal area
+
+<!-- Section 7.1 -->
+
+## Tree weights for nested circles adjustment
+
+<!-- Section 7.1.1 -->
+
+### Tree weight for ratio estimator
+
+In the context of **ratio estimator,** tree weight converts small size trees' variables to their equivalent if small trees were measured in the same area as the bigger sized trees.
+
+For Lao PDR, the ratio between small and big trees is 4:
+
+```{r}
+#| label: weight_re
+
+tree <- tree |> mutate(tree_weight = if_else(tree_dbh < 30, 4, 1))
+
+```
+
+Let's calculate where this value 4 comes from in @exr-71.
+
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- Ex 7.1 -->
+
+::: {#exr-71}
+## \~ Where does weight 4 come from?
+
+-   Calculate 'Asmall' as the area of a circle of 8m radius
+
+-   Calculate 'Abig' as the area of a circle of 16m radius
+
+-   Calculate Abig / Asmall
+:::
+::::
+
+Type here answers to @exr-71:
+
+```{r}
+#| label: ex-71
+
+## Solution
+Asmall <- pi * 8^2 
+Abig   <- pi * 16^2
+Abig / Asmall 
+
+```
+
+<!-- Section 7.1.2 -->
+
+### Tree weight for subplot per ha values
+
+To get per ha at the subplot level, we first assign to each tree its subplot nested circle area, then the weight is the inverse of this area
+
+```{r}
+#| label: weight_sperr
+
+tree <- tree |> 
+  mutate( 
+    tree_spha = if_else(tree_dbh < 30, pi * 16^2 / 10000, pi * 16^2 / 10000),
+    tree_weight_spha = 1 / tree_spha
+  )
+
+```
+
+There might be an error in the above code snippet, let's solve it in @exr-72.
+
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 7.2 -->
+
+::: {#exr-72}
+## \~ Find the error  
+
+-   Copy/paste the previous code snippet
+
+-   Find and correct the error in `tree_spha`
+:::
+::::
+
+Type here answers to @exr-72:
+
+```{r}
+#| label: ex-72
+
+## !!! Solution
+tree <- tree |> mutate( 
+  tree_spha = if_else(tree_dbh < 30, pi * 8^2 / 10000, pi * 16^2 / 10000), 
+  tree_weight_spha = 1 / tree_spha 
+  )
+
+```
+
+<!-- Section 7.2 -->
+
+### Calculate tree basal area
+
+The basal area of a tree is its stem area footprint based on the measurement of it diameter at breast height.
+
+```{r}
+#| label: tree-ba
+
+tree <- tree |> mutate(tree_ba = pi * (tree_dbh/200)^2)
+
+```
+
+Let's check subplot level basal area per land cover class in @exr-73.
+
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 7.3 -->
+
+::: {#exr-73}
+## \~ (optional) Basal area per subplot  
+
+-   From tree, use `group_by()` and `summarise()` to create `subplot_ba`, the sum of `tree_ba * tree_weight_spha` per plot and subplot number,
+
+-   Join `lc_class_center` from the `subplot` table using suffix control,
+
+-   Make a boxplot of `subplot_ba` against `lc_class_center`.
+:::
+::::
+
+Type here answers to @exr-73:
+
+```{r}
+#| label: ex-73
+
+## !!! Solutions
+tmp_sp <- subplot |> select(plot_no, subplot_no, subplot_lc_class_center) 
+
+tree |> 
+  group_by(plot_no, subplot_no) |> 
+  summarise(subplot_ba = sum(tree_ba * tree_weight_spha), .groups = "drop") |> 
+  left_join(tmp_sp, by = join_by(plot_no, subplot_no)) |> 
+  ggplot(aes(x = subplot_lc_class_center, y = subplot_ba)) + 
+  geom_boxplot() + 
+  geom_jitter(alpha = 0.1, shape = 21)
+
+```
+
+BONUS: The function `geom_jitter()` is a nice addition to boxplot figures to see all the subplot values on top of their distribution.
