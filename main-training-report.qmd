@@ -1,7 +1,7 @@
 ---
 title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
-subtitle: "Session 06: data joins"
-date: "01-05 Sep 2025"
+subtitle: "01-05 Sep 2025, FIPD office, Vientiane, Lao PDR"
+#date: ""
 number-sections: true
 toc: true
 toc-depth: 2
@@ -19,6 +19,12 @@ format:
     documentclass: scrartcl
     papersize: A4
     colorlinks: true
+    geometry:
+      - top=20mm
+      - bottom=20mm
+      - left=20mm
+      - right=20mm
+      - heightrounded
 editor: visual
 ---
 
@@ -32,7 +38,7 @@ The training objective was to:
 2.  Present the code base used for analyzing the 4th National Forest Inventory of Lao PDR, implemented in 2024 and 2025.
 3.  Explore opportunities to build a R community with research institutions and the civil society to help each other build analytical skills and deal with complex data analysis in the forest, ecology and environment sectors.
 
-This report compiles the main slides of the presentation, all the code presented during the training, with the exerices and the solutions.
+This report compiles the main slides of the presentation, all the code presented during the training, with the exercises and the solutions.
 
 # Initial Setup {.unnumbered}
 
@@ -46,6 +52,7 @@ Before going to loading data and perform the analysis, we need to prepare the en
 if (!require(here)) install.packages("here"); library(here)
 
 source(here("R/00-load-packages.R"))
+source(here("R/fct-nfi-aggregate3-new.R"))
 ```
 
 # Session 01: Objectives
@@ -1032,7 +1039,7 @@ Type here answers to @exr-73:
 ```{r}
 #| label: ex-73
 
-## !!! Solutions
+## !!! Solution
 tmp_sp <- subplot |> select(plot_no, subplot_no, subplot_lc_class_center) 
 
 tree |> 
@@ -1046,3 +1053,747 @@ tree |>
 ```
 
 BONUS: The function `geom_jitter()` is a nice addition to boxplot figures to see all the subplot values on top of their distribution.
+
+# Session 08: Tree aboveground biomass
+
+**GOALS:**
+
+1.  add AGB at tree level for each forest type
+
+2.  Add AGB from chave 05 and 14 without height
+
+3.  Make a figure for natural forest and one for plantations, showing forest type AGB, and chave models
+
+<!-- Section 8.1 -->
+
+## List of models
+
+-   `"EG" ~ 0.3112 * tree_dbh^2.2331,`
+
+-   `"MD" ~ 0.523081 * tree_dbh^2,`
+
+-   `"DD" ~ 0.2137 * tree_dbh^2.2575,`
+
+-   `"CF" ~ 0.1277 * tree_dbh^2.3944,`
+
+-   `"MCB" ~ 0.1277 * tree_dbh^2.3944,`
+
+-   `"P_AC" ~ 0.1173 * tree_dbh^2.454,`
+
+-   `"P_EC" ~ 0.199 * tree_dbh^2.185,`
+
+-   `"P_RB" ~ 0.0082 * (pi*tree_dbh)^2.5623, ## Rubber model uses circumference`
+
+-   `"P_TK" ~ 0.077 * tree_dbh^2.546,`
+
+-   `"P_OTH" ~ 0.3112 * tree_dbh^2.2331,`
+
+-   `"RV" ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),`
+
+-   `"B" ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),`
+
+-   `Chave14 = round(exp(-1.803 - 0.976plot_E + 0.976log(0.6) + 2.673log(tree_dbh) -0.0299(log(tree_dbh))^2)`
+
+-   `Chave05 = round(0.6 * exp(-1.499 + 2.148log(tree_dbh) + 0.207(log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3)`
+
+<!-- Section 8.2 -->
+
+## AGB per forest type
+
+We can assign different AGB models to trees for different forest types with `mutate()` and `case_when()`:
+
+```{r}
+#| label: agb-demo
+
+#table(tree$lc_code)
+
+tree <- tree |> 
+  mutate( 
+    tree_agb_final = case_when(
+      lc_code == "EG" ~ 0.3112 * tree_dbh^2.2331, 
+      ## ADD OTHER equations here 
+      TRUE ~ 0
+    ) 
+  )
+```
+
+Let's fill in the other cases in the @exr-81.
+
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 8.1 -->
+
+::: {#exr-81}
+## \~ Complete tree_agb_final
+
+-   For all forest land covers add their equations as shown at the beginning of the document.
+
+-   For land cover with no equation, assign 0 with `TRUE ~ 0`.
+
+-   Make a figure with 'tree_agb_final' against 'tree_dbh' as points (optional)
+
+-   Make a figure with 'tree_agb_final' against 'tree_dbh' as line with color based on 'lc_code' (optional)
+:::
+::::
+
+Type here answers to @exr-81:
+
+```{r}
+#| label: ex-81-code
+
+## !!! Solution
+tree <- tree |>
+  mutate(
+    tree_agb_final = case_when(
+      lc_code == "EG"    ~ 0.3112 * tree_dbh^2.2331,
+      lc_code == "MD"    ~ 0.523081 * tree_dbh^2,
+      lc_code == "DD"    ~ 0.2137 * tree_dbh^2.2575,
+      lc_code == "CF"    ~ 0.1277 * tree_dbh^2.3944,
+      lc_code == "MCB"   ~ 0.1277 * tree_dbh^2.3944,
+      lc_code == "P_AC"  ~ 0.1173 * tree_dbh^2.454,
+      lc_code == "P_EC"  ~ 0.199 * tree_dbh^2.185,
+      lc_code == "P_RB"  ~ 0.0082 * (pi*tree_dbh)^2.5623, 
+      ## > Rubber model uses circumference
+      lc_code == "P_TK"  ~ 0.077 * tree_dbh^2.546,
+      lc_code == "P_OTH" ~ 0.3112 * tree_dbh^2.2331,
+      lc_code == "RV"    ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),
+      lc_code == "B"     ~ 0.6 * exp(-1.499 + 2.148 * log(tree_dbh) + 0.207 * (log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3),
+      TRUE ~ 0
+    )
+  )
+
+# tree |> 
+#   ggplot(aes(x = tree_dbh, y = tree_agb_final)) + 
+#   geom_point()
+
+# tree |> 
+#   ggplot(aes(x = tree_dbh, y = tree_agb_final)) + 
+#   geom_line(aes(color = lc_code))
+```
+
+<!-- Section 8.3 -->
+
+## AGB from Chave 2005 and 2014
+
+Let's add 3 models to all trees, regardless of their forest type to compare with the forest type based models, in @exr-82.
+
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 8.2 -->
+
+::: {#exr-82}
+## \~ Add AGB allometric equations for all trees  
+
+-   Add 'tree_agb_chave05' with Chave et al. 2005 equation
+
+-   Add 'tree_agb_chave14' with Chave et al. 2014 equation
+
+-   Add 'tree_agb_EG' with the evergreen forest model
+:::
+::::
+
+Type here answers to @exr-82:
+
+```{r}
+#| label: ex-82-code
+
+## !!! Solution
+tree <- tree |> 
+  mutate(
+    tree_agb_chave05 = 
+      0.6 * exp(
+      -1.499 + 2.148*log(tree_dbh) + 
+        0.207*(log(tree_dbh))^2 - 0.0281*(log(tree_dbh))^3
+      ),
+    tree_agb_chave14 = 
+      exp(
+        -1.803 - 0.976*plot_E + 0.976*log(0.6) + 
+          2.673*log(tree_dbh) - 0.0299*(log(tree_dbh))^2
+        ),
+    tree_agb_EG = 0.3112 * tree_dbh^2.2331
+    )
+```
+
+<!-- Section 8.4 -->
+
+## Compare AGB models
+
+<!-- Section 8.4.1 -->
+
+### Natural forest
+
+Let's compare our forest type specific tree aboveground with the Chave's models and the model for Evergreen forests. Since there are many forest type let's look at natural forests first with `filter()`.
+
+```{r}
+#| label: agb-compa-natural
+
+tree |>
+  filter(tree_agb_final != 0, lc_no <= 29) |>
+  ggplot(aes(x = tree_dbh, y = tree_agb_final)) +
+  geom_point() +
+  geom_line(aes(y = tree_agb_chave05), color = "grey60") +
+  geom_line(aes(y = tree_agb_chave14), color = "darkred") +
+  geom_line(aes(y = tree_agb_EG), color = "darkgreen") +
+  facet_wrap(~lc_no)
+```
+
+We can observe in this figure that the forest type specific models are quite conservative, since our AGB final model predicts smaller AGB for the same DBH compared to both Chave's models.
+
+<!-- Section 8.4.2 -->
+
+### (optional) Planted forest
+
+Let's produce the same figure for planted forests in @exr-83.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 8.3 -->
+
+::: {#exr-83}
+## \~ Compare models for plantations
+
+-   Make a similar graph than 3.1 but for planted forest only
+:::
+::::
+
+Type here answers to the @exr-83:
+
+```{r}
+#| label: ex-83-code
+
+## Your code here
+
+## !!! SOL
+tree |>
+  filter(tree_agb_final != 0, lc_no >= 160) |>
+  ggplot(aes(x = tree_dbh, y = tree_agb_final)) +
+  geom_point() +
+  geom_line(aes(y = tree_agb_chave05), color = "grey60") +
+  geom_line(aes(y = tree_agb_chave14), color = "darkred") +
+  geom_line(aes(y = tree_agb_EG), color = "darkgreen") +
+  facet_wrap(~lc_code)
+## !!!
+```
+
+Plantation models selected for AGB final are also conservative in general, except for the rubber model.
+
+# Session 09: Aggregate tree to forest type AGB
+
+**GOALS:**
+
+1.  Calculate the mean aboveground biomass for all forest types using **plot level** land cover and **systematic sampling**.
+2.  Calculate the mean aboveground biomass for all forest types using **ratio estimators** and **2-stages sampling for post-stratification**.
+3.  Compare estimates.
+
+<!-- Section 9.1 -->
+
+## AGB with plot level land cover and systematic sampling
+
+**Step-by-step**
+
+1.  Sum tree AGB to subplots.
+
+2.  Make plot majority LC class.
+
+3.  Create plot level AGB based on mean subplot AGB.
+
+4.  Create Forest type AGB as the mean of plot AGB per forest type.
+
+5.  Calculate sampling error.
+
+### Sum tree AGB to subplot
+
+We will use `group_by()` and `summarise()` to bring tree characteristics to the subplot level.
+
+```{r}
+#| label: sp-agb
+
+subplot_agb <- tree |>
+  group_by(plot_no, subplot_no) |>
+  summarise(
+    sp_agb = sum(tree_agb_final * tree_weight_spha / 1000),
+    sp_ba  = sum(tree_ba * tree_weight_spha),
+    sp_dens = sum(tree_weight_spha),
+    tree_meas = n(),
+    .groups = "drop"
+  )
+```
+
+### Load plot level main land cover
+
+Plot level land cover was generated, from the subplots center LC, with the following rules:
+
+1.  For plots with one unique LC, they were directly assigned to plot level.
+2.  For plots with multiple land cover, we used the majority LC for the whole plot.
+3.  If some plots have equal importance of two land covers, we used to minimum land cover class.
+
+```{r}
+#| label: load-plotlc
+
+plot_lc <- read_csv("data/training_plot_lc.csv", show_col_types = FALSE)
+
+```
+
+### Aggregate subplot to plot
+
+We take the mean of subplot variables (except tree measured count).
+
+```{r}
+#| label: plot-agb
+
+plot_agb <- subplot_agb |>
+  group_by(plot_no) |>
+  summarise(
+    plot_agb = mean(sp_agb),
+    plot_ba = mean(sp_ba),
+    plot_dens = mean(sp_dens),
+    plot_tree_meas = sum(tree_meas)
+  ) |>
+  left_join(plot_lc, by = join_by(plot_no))
+
+```
+
+Let's look at plot AGB per land cover in @exr-91.
+
+:::: {.callout-warning appearance="simple" icon="false"}
+<!-- EX 9.1 -->
+
+::: {#exr-91}
+## \~ Boxplot of plot AGB  
+
+-   Make a boxplot of plot AGB against land cover classes
+:::
+::::
+
+Type here the answers to @exr-91:
+
+```{r}
+#| label: ex-91-code
+
+## !!! Solution
+plot_agb |>
+  ggplot(aes(x = plot_lc, y = plot_agb)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.1, size = 0.8)
+```
+
+### Aggregate to forest type AGB
+
+Now we can take averages of plot AGB for each forest type. For the uncertainty, we also need **standard deviation** of AGB and the **number of plots**.
+
+```{r}
+#| label: ftype-agb
+
+ftype_agb <- plot_agb |>
+  group_by(plot_lc) |>
+  summarise(
+    plot_count = n(),
+    total_tree_meas = sum(plot_tree_meas),
+    ftype_dens = mean(plot_dens),
+    ftype_ba = mean(plot_ba),
+    ftype_agb = mean(plot_agb),
+    ftype_agb_sd = sd(plot_agb)
+  )
+
+```
+
+We can calculate the uncertainty for systematic design with this formula:
+
+$$
+U\% = t^{1 - \alpha/2}_{n-1} \times \frac{\sigma}{\sqrt{n}} \times \frac{1}{\mu} \times 100
+$$
+
+The student's law function in R is `qt()`, and uncertainty can be calculated from the AGB mean and standard deviation as follows:
+
+```{r}
+#| label: ftype-agbu
+
+ftype_agb <- ftype_agb |>
+  mutate(
+    ftype_agb_se = ftype_agb_sd / sqrt(plot_count),
+    ftype_agb_me = qt(0.975, plot_count - 1) * ftype_agb_se,
+    ftype_agb_U  = ftype_agb_me / ftype_agb * 100,
+    ftype_agb_cilower = ftype_agb - ftype_agb_me,
+    ftype_agb_ciupper = ftype_agb + ftype_agb_me
+  )
+
+```
+
+We can then make a plot of forest type AGB with sampling uncertainty. We added a limit on the y-axis to avoid uncertainty of Coniferus Forest (CF, code 14) condensing the whole figure with `ylim(0, 600)`.
+
+```{r}
+#| label: ftype-agb-plot
+
+ftype_agb |>
+  ggplot(aes(x = plot_lc, y = ftype_agb)) +
+  geom_col(aes(fill = plot_lc), col = "black") +
+  geom_errorbar(aes(ymin = ftype_agb_cilower, ymax = ftype_agb_ciupper)) +
+  theme(legend.position = "none") +
+  ylim(0, 600)
+
+```
+
+<!-- Section 9.2 -->
+
+## AGB with ratio estimator and 2-stages sampling for post-stratification
+
+Step-by-step:
+
+1.  Prepare subplot x LCS level table
+
+2.  Use the aggregate function 'nfi_aggregate3()' to get all aggregation levels
+
+3.  Compare results with equal plot statistiscs (table 'ftype')
+
+### Prepare the subplot x LCS table for aggregation
+
+#### Initial data preparation
+
+For the second approach, all subplots must be accounted for, visited or not, accessible or not. This table has been prepared and can be loaded into the ancillary data list `anci`.
+
+```{r}
+#| label: load-ph2
+
+anci$ph2 <- read_csv("data/training_anci_phase2.csv", show_col_types = F)
+
+ph2_subplot <- anci$ph2
+
+# format(nrow(anci$ph2) / 20, big.mark = ",")
+```
+
+We can observe that `anci$ph2` contains `r format(nrow(anci$ph2) / 20, big.mark = ",")` *(1,067)* plots, as initially planned in the 12 x 18 km grid.
+
+To generate this table, instead of starting from tree aggregates or from the subplot table, we start from the vector of planned Phase 2 plots and we recreate all combinations of subplot x LCS with `expand_grid()` .
+
+```{r}
+#| label: recreate-ph2
+
+vec_ph2 <- anci$ph1 |> 
+  filter(!is.na(plot_id)) |>
+  pull(plot_id) |>
+  sort()
+
+test_ph2 <- expand_grid(
+  plot_id = vec_ph2,
+  subplot_no = c("A", "B", "C", "D"),
+  lcs_no = 1:5
+) |>
+  mutate(subplot_id = paste0(subplot_no, lcs_no))
+
+```
+
+We can check that this table is identical to `anci$ph2` with `all.equal()`:
+
+```{r}
+tmp_ph2 <- anci$ph2 |> 
+  select(plot_id, subplot_no, lcs_no, subplot_id)
+
+all.equal(tmp_ph2, test_ph2)
+```
+
+We then need to add **accessibility** from subplot and subpopulation and **strata** from phase 1 data with `left_join()` in @exr-92.
+
+:::: {.callout-warning appearance="simple"}
+<!-- EX 9.2 -->
+
+::: {#exr-92}
+## \~ (optional) Join core info to phase 2 table
+
+-   Prepare 'tmp_sp' a table containing `plot_no`, `subplot_no` and `subplot_access` from the subplot table and rename `plot_no` into `plot_id`.
+
+-   Prepare 'tmp_ph1' a table containing `plot_id`, `subpop`, `stratum` , `ph1_prov_no` and `ph1_prov_name` from the table `anci$ph1` and rename `ph1_prov_no` into `prov_no` and `ph1_prov_name` into `prov_name`
+
+-   Join these 2 tables to `ph2_subplot` with suffix control method.
+:::
+::::
+
+Type here answers to @exr-92:
+
+```{r}
+#| label: ex-92-code
+
+## !!! Solution
+tmp_sp <- subplot |>
+  select(plot_id = plot_no, subplot_no, subplot_access)
+
+tmp_ph1 <- anci$ph1 |>
+  select(plot_id, subpop, stratum, prov_no = ph1_prov_no, prov_name = ph1_prov_name)
+
+
+ph2_subplot <- ph2_subplot |>
+  mutate(
+    subplot_access = NA,
+    subpop = NA,
+    stratum = NA,
+    prov_no = NA,
+    prov_name = NA
+  ) |>
+  left_join(tmp_ph1, by = join_by(plot_id), suffix = c("_rm", "")) |>
+  left_join(tmp_sp, by = join_by(plot_id, subplot_no), suffix = c("_rm", "")) |>
+  select(-ends_with("_rm"))
+
+```
+
+In the final preparation phase 2 subplot table, correction for shifted plots was implemented beforehand.
+
+#### **Re-coding accessibility**
+
+Accessibility plays an important role in the final estimates. Since not all the initial 1,067 plots were visited, there is missing information on **many non-forest plots** and **some forest plots**. To simplify the calculations, it was considered that:
+
+-   **all non-visited forest plots would be considered as non-accessible,**
+
+-   **all non-visited non-forest plots would be considered as accessible with biomass 0.**
+
+This is important to keep in mind in case biomass of trees outside forest becomes relevant for future NFI cycles.
+
+------------------------------------------------------------------------
+
+NOTE: The Phase 2 focused on forest and RV land cover, but some plots from Phase 1 and planned for phase 2 were non-forest in the Phase 1 interpretation and still visited.
+
+```{r}
+#| label: ph1-nonforest
+
+tmp_ph2_nonforest <- anci$ph1 |> 
+  filter(!is.na(plot_id), stratum == 4)
+
+vec_ph2nf <- tmp_ph2_nonforest |> pull(ph1_plot_no)  
+
+write_csv(tmp_ph2_nonforest, "ph2_nonforest_planned.csv")
+
+tmp_ph2nf_visited <- subplot |>
+  filter(plot_no %in% vec_ph2nf, subplot_no == "A") 
+
+write_csv(tmp_ph2nf_visited, "ph2_nonforest_visited.csv")
+
+```
+
+------------------------------------------------------------------------
+
+Code for re-coding accessibility:
+
+```{r}
+#| label: sp-access
+
+ph2_subplot <- ph2_subplot |>
+  mutate(
+    access = case_when(
+      plot_id <= 636 & subplot_access == "accessible" ~ TRUE,
+      plot_id <= 636 & subplot_access != "accessible" ~ FALSE,
+      plot_id <= 636 & is.na(subplot_access) ~ FALSE,
+      stratum %in% 1:3 ~ FALSE,
+      stratum == 4 ~ TRUE,
+      TRUE ~ NA
+    )
+  )
+
+```
+
+#### Subplot largest area
+
+For aggregation with ratio estimator we need to keep track of the areas where trees are measured. Since we have a tree weight for small trees, we are only interested in the larger area:
+
+-   12 m side square of a quarter
+
+-   difference between the 16m radius circle and the 12m side square.
+
+```{r}
+#| label: sp-area
+
+ph2_subplot <- ph2_subplot |>
+  mutate(
+    sp_area = if_else(lcs_no == 1, 12^2, (pi*16^2 - 12^2)/4) / 10000
+  )
+
+```
+
+#### Aggregate tree to subplot x LCS
+
+We can now aggregate trees to the subplot x LCS level and join with the phase 2 subplot table.
+
+```{r}
+#| label: agg-tree
+
+ph2_sp_tree <- tree |>
+  select(plot_id = plot_no, subplot_no, lcs_no, tree_weight, tree_ba, tree_agb_final) |>
+  mutate(
+    subplot_id = paste0(subplot_no, lcs_no)
+  ) |>
+  group_by(plot_id, subplot_id) |>
+  summarise(
+    dens = sum(tree_weight),
+    ba   = sum(tree_ba * tree_weight),
+    agb  = sum(tree_agb_final * tree_weight) / 1000, ## Convert kg to tons
+    .groups= "drop"
+  )
+
+```
+
+```{r}
+#| label: join-tree
+
+ph2_subplot <- ph2_subplot |>
+  mutate(
+    dens = NA,
+    ba = NA,
+    agb = NA
+  ) |>
+  left_join(ph2_sp_tree, by = join_by(plot_id, subplot_id), suffix = c("_rm", "")) |>
+  select(-ends_with("_rm")) |>
+  mutate(
+    dens = if_else(!is.na(dens), n_tree, 0),
+    ba   = if_else(!is.na(ba), ba, 0),
+    agb  = if_else(!is.na(agb), agb, 0)
+  )
+
+```
+
+### Run the aggregation function
+
+The aggregation function 3, for 2-stages sampling with ratio estimator, takes phase 1 and phase 2 data as input as well as the attributes $y$ and $x$ for the ratio. $y$ can change based on what attribute we want to aggregate, while $x$ is always the minimum measured area.
+
+Let's see an example with tree density and no subpopulation.
+
+```{r}
+#| label: res3_dens
+
+ph2_data <- ph2_subplot |> mutate(subpop = 1)
+
+res3_dens <- nfi_aggregate3(
+  .ph1_df = anci$ph1, 
+  .ph2_sp = ph2_data, 
+  .class_d = lc_no, 
+  .attr_y = dens, 
+  .attr_x = sp_area, 
+  .aoi_area = 23680000
+    )
+
+res3_dens_tot <- res3_dens$totals_short
+```
+
+The function output is a list with different levels of data aggregation.
+
+Practice now the function `nfi-aggregate3()` to get basal area and aboveground biomass in @exr-93.
+
+:::: {.callout-warning appearance="simple"}
+<!-- Ex 9.3 -->
+
+::: {#exr-93}
+## \~ Aggregate basal area and AGB  
+
+-   (optional) Create `res3_ba` as the output of the aggregation function with basal area as `.attr_y` .
+
+-   Create `res3_agb` as the output of the aggregation function with aboveground biomass as `.attr_y` .
+
+-   Save the totals_short output from res3_agb to a new object `res3_agb_tot`.
+
+-   Make a barplot with AGB per ha against land cover with their error bars, for natural forest only.
+:::
+::::
+
+Type here answers to @exr-93:
+
+```{r}
+#| label: ex-93-code
+
+## !!! Solution
+ph2_data <- ph2_subplot |> mutate(subpop = 1)
+
+res3_agb <- nfi_aggregate3(
+  .ph1_df = anci$ph1, 
+  .ph2_sp = ph2_data, 
+  .class_d = lc_no, 
+  .attr_y = agb, 
+  .attr_x = sp_area, 
+  .aoi_area = 23680000
+    )
+
+res3_agb_tot <- res3_agb$totals_short
+
+res3_agb_tot |>
+  filter(lc_no < 20) |>
+  ggplot(aes(x = lc_no, y = Rd)) +
+  geom_col(aes(fill = lc_no), col = "grey80") +
+  theme(legend.position = "none") +
+  geom_errorbar(aes(ymin = Rd - Rd*Rd_mep/100, ymax = Rd + Rd*Rd_mep/100)) +
+  labs(
+    x = "Land cover code",
+    y = "AGB (ton (DM)/ha)"
+  )
+```
+
+We can use an additional package: `kableExtra`, to customize tables with adding extra headers and even colors. However this package focuses on HTML and PDF outputs, for DOCX, we stick to simple `kable()` function. Let's show the totals for AGB:
+
+```{r}
+#| label: agb-tab
+
+tab_agb <- res3_agb$totals_d |>
+  select(lc_no, Xd, Xd_mep, Xtot, Yd, Yd_mep, Rd, Rd_mep, Ytot) |>
+  filter(lc_no <= 22 | lc_no >= 160)
+
+
+if (knitr::is_html_output() | knitr::is_latex_output()){
+  
+  kbl(
+  tab_agb,
+  col.names = c(
+    "Land cover", "prop.", "U (perc)", "tot.", "prop.", "U (perc)", 
+    "ton (DM)/ha", "U (perc)", "tot." 
+    ),
+  format.args = list(big.mark = ",", digits = 2),
+  booktabs = F
+  ) |>
+  kable_styling(
+    bootstrap_options = c("bordered", "condensed", "responsive"),
+    full_width = FALSE
+  ) |>
+  add_header_above(
+    c(" " = 1, "Area" = 3, "AGB" = 5), border_left = T, border_right = T
+    ) |>
+  column_spec(1, border_left = T) |>
+  column_spec(9, border_right = T)
+  
+} else {
+ 
+  kable(
+  tab_agb,
+  col.names = c(
+    "Land cover", "Area prop.", "Area U (perc)", "Area tot. (ha)", "AGB prop.",
+    "AGB prop. U (perc)", "AGB (ton DM/ha)", "AGB U (perc)", "AGB tot. (tons)" 
+    ),
+  format.args = list(big.mark = ",", digits = 2)
+  )
+
+}
+```
+
+<!-- Section 9.3 -->
+
+## Compare AGB estimates from the 2 aggregation methods
+
+Check AGB from 2 methods
+
+```{r}
+#| label: agb-compa
+
+tmp_agb1 <- ftype_agb |> 
+  filter(plot_lc %in% c("11", "12", "13", "14", "15", "21", "22")) |>
+  mutate(
+    plot_lc = as.numeric(plot_lc),
+    method = "simple"
+    ) |>
+  select(method, lc_no = plot_lc, agb = ftype_agb, agb_U = ftype_agb_U)
+
+tmp_agb2 <- res3_agb$totals_short |>
+  filter(lc_no <= 22) |>
+  mutate(method = "ratio estimator") |>
+  select(method, lc_no, agb = Rd, agb_U = Rd_mep)
+
+agb_compa <- tmp_agb1 |> bind_rows(tmp_agb2)
+
+agb_compa |>
+  ggplot(aes(x = as.character(lc_no), y = agb)) +
+  geom_col(aes(fill = method), col = "grey30", position = position_dodge()) +
+  geom_errorbar(aes(group = method, ymin = agb - agb*agb_U/100, ymax = agb + agb*agb_U/100), position = position_dodge()) +
+  ylim(0, 600)
+```
+
+The ratio estimator method had big impact on EG and RV. Also big influence on uncertainty of CF.
+
+# Conclusion
