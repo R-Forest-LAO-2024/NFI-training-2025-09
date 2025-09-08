@@ -236,7 +236,7 @@ Visualizations can also be used to detect outliers. We use the example of small 
 <!-- EX 5.3 -->
 
 ::: {#exr-53}
-## \~ (Optional) detect outliers on graph  
+## \~ (Optional) detect outliers on graph
 
 **Part 1: Find outliers**
 
@@ -984,7 +984,7 @@ There might be an error in the above code snippet, let's solve it in @exr-72.
 <!-- EX 7.2 -->
 
 ::: {#exr-72}
-## \~ Find the error  
+## \~ Find the error
 
 -   Copy/paste the previous code snippet
 
@@ -1024,7 +1024,7 @@ Let's check subplot level basal area per land cover class in @exr-73.
 <!-- EX 7.3 -->
 
 ::: {#exr-73}
-## \~ (optional) Basal area per subplot  
+## \~ (optional) Basal area per subplot
 
 -   From tree, use `group_by()` and `summarise()` to create `subplot_ba`, the sum of `tree_ba * tree_weight_spha` per plot and subplot number,
 
@@ -1180,7 +1180,7 @@ Let's add 3 models to all trees, regardless of their forest type to compare with
 <!-- EX 8.2 -->
 
 ::: {#exr-82}
-## \~ Add AGB allometric equations for all trees  
+## \~ Add AGB allometric equations for all trees
 
 -   Add 'tree_agb_chave05' with Chave et al. 2005 equation
 
@@ -1356,7 +1356,7 @@ Let's look at plot AGB per land cover in @exr-91.
 <!-- EX 9.1 -->
 
 ::: {#exr-91}
-## \~ Boxplot of plot AGB  
+## \~ Boxplot of plot AGB
 
 -   Make a boxplot of plot AGB against land cover classes
 :::
@@ -1533,19 +1533,11 @@ ph2_subplot <- ph2_subplot |>
 
 In the final preparation phase 2 subplot table, correction for shifted plots was implemented beforehand.
 
-#### **Re-coding accessibility**
-
-Accessibility plays an important role in the final estimates. Since not all the initial 1,067 plots were visited, there is missing information on **many non-forest plots** and **some forest plots**. To simplify the calculations, it was considered that:
-
--   **all non-visited forest plots would be considered as non-accessible,**
-
--   **all non-visited non-forest plots would be considered as accessible with biomass 0.**
-
-This is important to keep in mind in case biomass of trees outside forest becomes relevant for future NFI cycles.
-
 ------------------------------------------------------------------------
 
-NOTE: The Phase 2 focused on forest and RV land cover, but some plots from Phase 1 and planned for phase 2 were non-forest in the Phase 1 interpretation and still visited.
+#### (NOTE) Investigating phase 2 plots in stratum 4: non-forest
+
+The Phase 2 focused on forest and RV land cover, but some plots from Phase 1 and planned for phase 2 were non-forest in the Phase 1 interpretation and still visited.
 
 ```{r}
 #| label: ph1-nonforest
@@ -1555,16 +1547,28 @@ tmp_ph2_nonforest <- anci$ph1 |>
 
 vec_ph2nf <- tmp_ph2_nonforest |> pull(ph1_plot_no)  
 
-write_csv(tmp_ph2_nonforest, "ph2_nonforest_planned.csv")
-
 tmp_ph2nf_visited <- subplot |>
   filter(plot_no %in% vec_ph2nf, subplot_no == "A") 
 
-write_csv(tmp_ph2nf_visited, "ph2_nonforest_visited.csv")
+## Save the tables in a new folder
+if (!"results" %in% list.files()) dir.create("results")
+
+write_csv(tmp_ph2_nonforest, "results/ph2_nonforest_planned.csv")
+write_csv(tmp_ph2nf_visited, "results/ph2_nonforest_visited.csv")
 
 ```
 
 ------------------------------------------------------------------------
+
+#### **Re-coding accessibility**
+
+Accessibility plays an important role in the final estimates. Since not all the initial 1,067 plots were visited, there is missing information on **many non-forest plots** and **some forest plots**. To simplify the calculations, it was considered that:
+
+-   **all non-visited forest plots would be considered as non-accessible,**
+
+-   **all non-visited non-forest plots would be considered as accessible with biomass 0.**
+
+This is important to keep in mind in case biomass of trees outside forest becomes relevant for future NFI cycles.
 
 Code for re-coding accessibility:
 
@@ -1675,7 +1679,7 @@ Practice now the function `nfi-aggregate3()` to get basal area and aboveground b
 <!-- Ex 9.3 -->
 
 ::: {#exr-93}
-## \~ Aggregate basal area and AGB  
+## \~ Aggregate basal area and AGB
 
 -   (optional) Create `res3_ba` as the output of the aggregation function with basal area as `.attr_y` .
 
@@ -1797,3 +1801,19 @@ agb_compa |>
 The ratio estimator method had big impact on EG and RV. Also big influence on uncertainty of CF.
 
 # Conclusion
+
+The training aimed to continue FIPD capacity building to handle the NFI data analysis with R. This training session focused on core parts of full calculation chain for the NFI cycle 4. The trainings elements were:
+
+-   Solving subplot coding errors manually based on time stamps
+
+-   Joining subplot level and phase 1 information to trees
+
+-   Calculating tree weights, basal area and aboveground biomass
+
+-   Aggregating tree aboveground biomass to domain average AGB per ha based on equal area plots and simple averages
+
+-   Practicing a custom function to get areas and AGB estimates per ha and totals following double-stage sampling for post-stratification with ratio estimator.
+
+This cycle adopted a more complex method than previous cycles with the introduction of ratio estimators and the inclusion of the Phase 1 observations in the estimation of domain estimates of core variables' averages and totals. This method is more sensitive to stratum assignment and few plots from stratum 4 (non-forest) were found to be forested and have tree records. This may explain the large differences between simple averages and weighted averages for double-stage sampling, in particular for evergreen forest and regenerating vegetation and requires further investigation. These plots may be shifted plots where the land cover was re-assigned but stratum was not.
+
+In terms of capacity building, FIPD team expressed interest in adopting R for forest management and small scale forest estimations, which are more frequent requests for them, in order to have more opportunities to practice. Additional training was also suggested to share the calculations for other pools.
