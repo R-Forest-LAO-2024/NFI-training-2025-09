@@ -1,5 +1,10 @@
 ---
-title: "Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle"
+title: |
+  Proceedings of the \
+  \
+  Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle \
+  \ 
+  
 subtitle: "01-05 Sep 2025, FIPD office, Vientiane, Lao PDR"
 #date: ""
 number-sections: true
@@ -30,7 +35,7 @@ editor: visual
 
 # Context {.unnumbered}
 
-This training contains all the code presented and the exercises with solutions for the "**Training workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle**", held in FIPD office, Vientiane, Lao PDR, from 1st to 5th September 2025.
+A new training course: "**Training workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle**", was organised for FIPD from 01 to 05 September 2025, in FIPD office in Vientiane (Lao PDR), in order to continue capacity building on national forest inventory data analysis and to present the calculation chain for the cycle 4 updated method.
 
 The training objective was to:
 
@@ -38,7 +43,9 @@ The training objective was to:
 2.  Present the code base used for analyzing the 4th National Forest Inventory of Lao PDR, implemented in 2024 and 2025.
 3.  Explore opportunities to build a R community with research institutions and the civil society to help each other build analytical skills and deal with complex data analysis in the forest, ecology and environment sectors.
 
-This report compiles the main slides of the presentation, all the code presented during the training, with the exercises and the solutions.
+The workshop agenda and participants list are shown in @fig-agenda1.
+
+This document contains all the code presented and the exercises with solutions during the training.
 
 # Initial Setup {.unnumbered}
 
@@ -55,9 +62,33 @@ source(here("R/00-load-packages.R"))
 source(here("R/fct-nfi-aggregate3-new.R"))
 ```
 
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
 # Session 01: Objectives
 
-TBD
+Session 1 presented the detailed objectives of the training, as a mixture of basic(refresher) and advanced analysis in R. The technical analysis objectives were to cover: Basic calculations, Aggregation with simple sampling, Ratio estimators, and Double sampling for post-stratification.
+
+The institutional objective was to explore a pool of resources available in other institutions to improve analytical capacities of FIPD. This includes academia and research institutions in Lao PDR to bring them together for broader technical exchange in R and exploring their potential support to FIPD.
+
+Finally, the workshop aimed at defining a work plan of continuous training to bring in additional pools and calculations.
+
+To achieve the above objectives, the training focused on:
+
+1.  Read data into R and visualize trees characteristics 
+
+2.  Manipulate tables (merge, split, rename)
+
+3.  Detect outliers and correct the data
+
+4.  Aggregate from tree to plot level
+
+5.  Aggregate plot level data to LC types
+
+6.  Aggregate to sub-population and national level
 
 <!-- MAIN SECTION BREAK -->
 
@@ -67,7 +98,7 @@ TBD
 
 # Session 02: Updated calculation chain for the NFI cycle 4 carbon analysis
 
-TBD
+The NFI cycle 4 of LAO PDR had an updated sampling methodology, with a double-stage sampling for stratification and ratio estimators.
 
 <!-- MAIN SECTION BREAK -->
 
@@ -1054,6 +1085,12 @@ tree |>
 
 BONUS: The function `geom_jitter()` is a nice addition to boxplot figures to see all the subplot values on top of their distribution.
 
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
 # Session 08: Tree aboveground biomass
 
 **GOALS:**
@@ -1273,6 +1310,12 @@ tree |>
 ```
 
 Plantation models selected for AGB final are also conservative in general, except for the rubber model.
+
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
 
 # Session 09: Aggregate tree to forest type AGB
 
@@ -1800,7 +1843,23 @@ agb_compa |>
 
 The ratio estimator method had big impact on EG and RV. Also big influence on uncertainty of CF.
 
-# Conclusion
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
+# Session 10: Building a R community of practice in Lao PDR
+
+**TBD**
+
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
+# Conclusion {.unnumbered}
 
 The training aimed to continue FIPD capacity building to handle the NFI data analysis with R. This training session focused on core parts of full calculation chain for the NFI cycle 4. The trainings elements were:
 
@@ -1816,4 +1875,26 @@ The training aimed to continue FIPD capacity building to handle the NFI data ana
 
 This cycle adopted a more complex method than previous cycles with the introduction of ratio estimators and the inclusion of the Phase 1 observations in the estimation of domain estimates of core variables' averages and totals. This method is more sensitive to stratum assignment and few plots from stratum 4 (non-forest) were found to be forested and have tree records. This may explain the large differences between simple averages and weighted averages for double-stage sampling, in particular for evergreen forest and regenerating vegetation and requires further investigation. These plots may be shifted plots where the land cover was re-assigned but stratum was not.
 
-In terms of capacity building, FIPD team expressed interest in adopting R for forest management and small scale forest estimations, which are more frequent requests for them, in order to have more opportunities to practice. Additional training was also suggested to share the calculations for other pools.
+In terms of capacity building, FIPD team expressed interest in adopting R for forest management and small scale forest estimations, which are more frequent requests for them, in order to have more opportunities to practice. Additional training was also suggested to share and practice the calculations for other pools.
+
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
+# ANNEX: Agenda {.unnumbered}
+
+![Agenda part 1](img/agenda1.png){#fig-agenda1}
+
+![Agenda part 2](img/agenda2.png){#fig-agenda2}
+
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
+# ANNEX: participants list {.unnumbered}
+
+**TBD**
