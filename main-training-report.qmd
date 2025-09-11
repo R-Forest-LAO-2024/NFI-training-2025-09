@@ -4,7 +4,6 @@ title: |
   \
   Workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle \
   \ 
-  
 subtitle: "01-05 Sep 2025, FIPD office, Vientiane, Lao PDR"
 #date: ""
 number-sections: true
@@ -33,23 +32,29 @@ format:
 editor: visual
 ---
 
+<!-- MAIN SECTION BREAK -->
+
+{{< pagebreak >}}
+
+<!-- MAIN SECTION BREAK -->
+
 # Context {.unnumbered}
 
-A new training course: "**Training workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle**", was organised for FIPD from 01 to 05 September 2025, in FIPD office in Vientiane (Lao PDR), in order to continue capacity building on national forest inventory data analysis and to present the calculation chain for the cycle 4 updated method.
+A new training course: "**Training workshop on Data analysis with R for Lao PDR’s fourth National Forest Inventory cycle**", was organised for FIPD from 01 to 05 September 2025, in FIPD office in Vientiane (Lao PDR). Its goal was continue capacity building of FIPD on national forest inventory data analysis and to present the calculation chain for the cycle 4 updated method.
 
-The training objective was to:
+The training objectives were to:
 
 1.  Continue build capacities of FIPD in forest data analysis with R and Rstudio.
-2.  Present the code base used for analyzing the 4th National Forest Inventory of Lao PDR, implemented in 2024 and 2025.
+2.  Present and practice on the code base used for analyzing the 4th National Forest Inventory of Lao PDR, implemented in 2024 and 2025.
 3.  Explore opportunities to build a R community with research institutions and the civil society to help each other build analytical skills and deal with complex data analysis in the forest, ecology and environment sectors.
 
 The workshop agenda and participants list are shown in @fig-agenda1.
 
-This document contains all the code presented and the exercises with solutions during the training.
+This document contains all the code presented during the training and the exercises with solutions.
 
 # Initial Setup {.unnumbered}
 
-Before going to loading data and perform the analysis, we need to prepare the environment by loading packages and setting a few options. Here we don't load directly packages, but we source a script that load them.
+Before loading data and performing the analysis, we needed to prepare the environment by loading packages and setting a few options. Here we didn't load packages directly, but we sourced a script that loaded them.
 
 ```{r}
 #| label: setup
@@ -72,7 +77,7 @@ source(here("R/fct-nfi-aggregate3-new.R"))
 
 Session 1 presented the detailed objectives of the training, as a mixture of basic(refresher) and advanced analysis in R. The technical analysis objectives were to cover: Basic calculations, Aggregation with simple sampling, Ratio estimators, and Double sampling for post-stratification.
 
-The institutional objective was to explore a pool of resources available in other institutions to improve analytical capacities of FIPD. This includes academia and research institutions in Lao PDR to bring them together for broader technical exchange in R and exploring their potential support to FIPD.
+The institutional objective was to explore a pool of resources available in other institutions to improve analytical capacities of FIPD. This included academia and research institutions in Lao PDR to bring them together for broader technical exchange in R and exploring their potential support to FIPD.
 
 Finally, the workshop aimed at defining a work plan of continuous training to bring in additional pools and calculations.
 
@@ -98,7 +103,35 @@ To achieve the above objectives, the training focused on:
 
 # Session 02: Updated calculation chain for the NFI cycle 4 carbon analysis
 
-The NFI cycle 4 of LAO PDR had an updated sampling methodology, with a double-stage sampling for stratification and ratio estimators.
+The NFI cycle 4 of LAO PDR was based on an updated sampling methodology, with a **double-stage sampling for post-stratification and ratio estimators**. This session went over the core part of the NFI design and calculations for carbon related variables.
+
+<!-- Section 2.1 -->
+
+## Sampling design
+
+The field plot design was based on a systematic grid of 12 by 18 km. However the following additions prevent
+
+The main design changes for the NFI cycle 4 were:
+
+-   the addition of a first phase with visual observation of land cover at plot center on an intense grid of 6 by 6 km, and
+
+-   
+
+<!-- Section 2.2 -->
+
+## Plot design
+
+<!-- Section 2.3 -->
+
+## Core measurements
+
+<!-- Section 2.4 -->
+
+## Analysis steps
+
+<!-- Section 2.5 -->
+
+## Results
 
 <!-- MAIN SECTION BREAK -->
 
