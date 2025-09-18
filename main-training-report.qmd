@@ -100,7 +100,45 @@ To achieve the above objectives, the training focused on:
 
 # Session 02: Updated calculation chain for the NFI cycle 4 carbon analysis
 
-The NFI cycle 4 of LAO PDR had an updated sampling methodology, with a two-phases sampling for stratification and ratio estimators.
+The NFI cycle 4 of LAO PDR had an updated sampling methodology: two-phases sampling (or double sampling) for stratification with ratio estimators. The plot design also slightly changed, the subplots were positioned 60 m apart center to center on a L shape.
+
+<!-- Section 2.1 -->
+
+## Sampling design
+
+The updated sampling design consisted of two sampling frames and sizes:
+
+-   Phase 1: a dense 6 x 6 km grid, on which all grid points were visually interpreted to identify the land cover class and stratum.
+
+-   Phase 2: an initial systematic subset of the phase 1, a 12 x 18 km grid, for field survey. Then not all plots on the second grid could be visited due to budget constraints, so around half of grid point were visited.
+
+Important advantages of this design:
+
+-   The final estimates takes into account both phases when producing means and totals.
+
+-   Mis-classifications in phase 1 are corrected with phase 2 plots.
+
+-   **2-phases designs produce both areas and forest characteristics, which makes final estimates generally more robust than NFIs with one sampling and independent land cover maps (**[Westfall et al. 2019](https://www.fs.usda.gov/nrs/pubs/jrnl/2019/nrs_2019_westfall_001.pdf)**).**
+
+<!-- Section 2.2 -->
+
+## Plot design
+
+The plot design was also updated from the NFI previous cycles, where the subplots where placed randomly within a designated area. In the cycle 4 design, plots are composed by 4 circular subplots in a L shape, with 60 m between subplot centers. Subplots are nested circles of 8 and 16 m radius for trees between 10 and 30 cm DBH (30 excluded) and trees bigger or equal to 30 cm DBH respectively.
+
+![Plot design of Lao PDR NFI cycle 4. (A) Plot design, (B) subplot design and (C) land cover observation and land cover sections.](img/plot-design.png)
+
+<!-- Section 2.3 -->
+
+## Core measurements
+
+<!-- Section 2.4 -->
+
+## Analysis steps
+
+<!-- Section 2.5 -->
+
+## Core results
 
 <!-- MAIN SECTION BREAK -->
 
