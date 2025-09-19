@@ -174,15 +174,63 @@ Lying deadwood:
 
 -   inner and outer ring in case of hollow stem.
 
-![Core measurements for carbon.](img/core-meas.png)
+![Core measurements for carbon. (A) Live tree measurements, (B) standing dead tree measurement, (C) Lying deadwood measurement, (D) stump measurement.](img/core-meas.png)
 
 <!-- Section 2.4 -->
 
 ## Analysis steps
 
+The data analysis was performed with R and R studio and structured around 4 main steps:
+
+1.  **Setup** the R environment (inc. loading NFI and ancillary data)
+
+2.  Prepare **clean** data (clean, correct and join)
+
+3.  **Calculate entity** level variables
+
+4.  **Aggregate** measurements to minimal measurement area, plot, strata and totals
+
+Each of the main steps was sub-divided into the following actions, noting that actions in bold with the symbol (\*) were the focus of this training:
+
+![Detailed calculation steps.](img/calc-steps.png)
+
+The initial input data from the field work was stored into an ONA server and downloaded manually as a master CSV. Splitting the master CSV and renaming columns was relatively complex and not the focus of this training. Instead "semi"-cleaned tables **tree, subplot** and **lcs** tables were prepared for the participants.
+
+Training practice was also limited to live trees aboveground biomass, as participants should be more familiar with this this carbon pool than deadwood, stump, sapling and lying deadwood.
+
+An overview on how the detailed actions were handled in specific R scripts was also presented:
+
+![List of analytical R scripts.](img/list-scripts.png)
+
 <!-- Section 2.5 -->
 
 ## Core results
+
+Core results were shown from the result XLSX file that contained the following tables:
+
+-   **Phase 1 data**: strata, subpopulations
+
+-   **Phase 2 subplot level**: subplot x LCS values for core variables (tree AGB, tree BGB, sapling AGB, DW, stump AGB, LDW, Ctotal)
+
+-   **Plot summary**: aggregate subplots to partial plots
+
+-   **Plot unique**: for each plot with mixed LC keeps the section with max AGB, if equal, keeps the smallest LC code
+
+-   **Subpop x stratum**:  aggregate variables for each land cover (i.e domain d)
+
+-   **Subpop**: aggregate strata 
+
+-   **Totals**: aggregate sub-populations
+
+The initial result file was prepared with ERPA vs non-ERPA zone as subpopulations but the final estimates required a few corrections (see final report):
+
+-   Correction of phase 1 land cover class passed to phase 2 plots. Initially based on FTM2022, these need to be back to Phase 1 land cover.
+
+-   Correction Factor was missing in EG and DD allometric equations.
+
+-   Subplot level AGB for root-to-shoot ratio was using wrong weights,
+
+-   ERPA subpopulations influenced slightly the final estimates vs a scenario with no subpopulation.
 
 <!-- MAIN SECTION BREAK -->
 
@@ -192,7 +240,7 @@ Lying deadwood:
 
 # Session 03: Discussion and remarks on the updated calculations
 
-TBD
+There were no questions on the calculation chain at the time of the presentation.
 
 <!-- MAIN SECTION BREAK -->
 
