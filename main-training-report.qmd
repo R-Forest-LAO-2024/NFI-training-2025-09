@@ -130,7 +130,7 @@ The plot design was also updated from the NFI previous cycles, where the subplot
 
 A new specificity of the NFI cycle 4 was to observe land cover on 5 points located at the subplot centers and 12 m north, east, south and west from the center. Following equidistance, or Thiessen polygons, land cover sections (LCS) were defined as areas of:
 
--    12 m side square at the center,
+-   12 m side square at the center,
 
 -   a quarter of the difference between the 16 m radius outer subplot circle and the 12 m side square for the other LCSs. The diagonals (NW-SE and SW-NE) were used to delineate the quarters.
 
