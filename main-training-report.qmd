@@ -51,7 +51,13 @@ This document contains all the code presented and the exercises with solutions d
 
 # Initial Setup {.unnumbered}
 
-Before going to loading data and perform the analysis, we need to prepare the environment by loading packages and setting a few options. Here we don't load directly packages, but we source a script that load them.
+The presentations, data, R projects as ZIP files or links to R projects on Github are available in the Google Classroom set for the training at:
+
+<https://classroom.google.com/c/NzU5NDMzMTU1MDI3?cjc=6jrq673a>
+
+NOTE: For security purpose the link is only valid for registered participants.
+
+Before loading the data and perform the analysis with [R](https://www.r-project.org/) and [Rstudio](https://posit.co/download/rstudio-desktop/), we need to prepare the environment by loading packages and setting a few options. Here we don't load directly packages, but we source a script that load them.
 
 ```{r}
 #| label: setup
@@ -250,7 +256,13 @@ There were no questions on the calculation chain at the time of the presentation
 
 # Session 04: Refresher on R for forest data analysis
 
-TBD
+This time the refresher didn't cover very basics of R but went back to a session of a previous training where local data were used to calculate the volume of a forest stand.
+
+The project and it's correction are available in the training Google Classroom.
+
+The main output were the tree density and volume per hectare for each forest zone (1-5) and for the whole forest stand.
+
+![Tree density at forest stand](img/refresher-tree-density.png)
 
 <!-- MAIN SECTION BREAK -->
 
