@@ -33,7 +33,11 @@ format:
 editor: visual
 ---
 
-<!-- FOR PUBLICATION USE: quarto render main-training-report.qmd THEN quarto publish gh-pages main-training-report.qmd -->
+<!-- FOR PUBLICATION run in terminal: -->
+
+<!-- quarto render main-training-report.qmd -->
+
+<!-- quarto publish gh-pages main-training-report.qmd -->
 
 # Context {.unnumbered}
 
@@ -1995,7 +1999,15 @@ The ratio estimator method had big impact on EG and RV. Also big influence on un
 
 # Session 10: Building a R community of practice in Lao PDR
 
-**TBD**
+The idea behind this sessions was to understand who else than FIPD is using R and R studio for forestry data analysis and if it would be of interest to pool resources together to increase capacities and share knowledge on these analyses.
+
+For this meeting, FIPD participants were joined by representatives from: NuOL, Lao National Statistic Office, NAFRI, DALAM, WWF and WCS.
+
+Participants presented scientific and project studies, for which the data analysis involved R codes, but in most cases the analysis were carried out by international experts.
+
+Participants expressed interest using R for forestry data analysis, but the capacity are overall relatively low. They also expressed interest in building a group to share studies, and maybe a private group where non-public data could also be shared.
+
+FIPD, F-REDD and FAO will discuss ion the feasibility to host a communication channel and how other institutions could be involved in further training on R for forestry data analysis.
 
 <!-- MAIN SECTION BREAK -->
 
@@ -2041,4 +2053,6 @@ In terms of capacity building, FIPD team expressed interest in adopting R for fo
 
 # ANNEX: participants list {.unnumbered}
 
-**TBD**
+Note: Participants below FAO joined only the last morning session on building a community of practice.
+
+![](img/participants.png)
